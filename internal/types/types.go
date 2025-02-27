@@ -53,7 +53,6 @@ type ListResponse struct {
 
 type GroupResponseItem struct {
 	Id        string `json:"id"`
-	IsPublic  bool   `json:"is_public"`
 	Name      string `json:"name"`
 	CreatedAt string `json:"created_at"`
 }

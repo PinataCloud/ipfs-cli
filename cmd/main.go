@@ -80,20 +80,19 @@ func main() {
 						Usage:     "Create a new group",
 						ArgsUsage: "[name of group]",
 						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "public",
-								Aliases: []string{"p"},
-								Value:   false,
-								Usage:   "Determine if the group should be public",
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
 							},
 						},
 						Action: func(ctx *cli.Context) error {
 							name := ctx.Args().First()
-							public := ctx.Bool("public")
+							network := ctx.String("network")
 							if name == "" {
 								return errors.New("Group name required")
 							}
-							_, err := groups.CreateGroup(name, public)
+							_, err := groups.CreateGroup(name, network)
 							return err
 						},
 					},
@@ -102,11 +101,6 @@ func main() {
 						Aliases: []string{"l"},
 						Usage:   "List groups on your account",
 						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "public",
-								Aliases: []string{"p"},
-								Usage:   "List only public groups",
-							},
 							&cli.StringFlag{
 								Name:    "amount",
 								Aliases: []string{"a"},
@@ -123,13 +117,18 @@ func main() {
 								Aliases: []string{"t"},
 								Usage:   "Paginate through results using the pageToken",
 							},
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
 						},
 						Action: func(ctx *cli.Context) error {
-							public := ctx.Bool("public")
 							amount := ctx.String("amount")
 							name := ctx.String("name")
 							token := ctx.String("token")
-							_, err := groups.ListGroups(amount, public, name, token)
+							network := ctx.String("network")
+							_, err := groups.ListGroups(amount, name, token, network)
 							return err
 						},
 					},
@@ -139,26 +138,25 @@ func main() {
 						Usage:     "Update a group",
 						ArgsUsage: "[ID of group]",
 						Flags: []cli.Flag{
-							&cli.BoolFlag{
-								Name:    "public",
-								Aliases: []string{"p"},
-								Value:   false,
-								Usage:   "Determine if the group should be public",
-							},
 							&cli.StringFlag{
 								Name:    "name",
 								Aliases: []string{"n"},
 								Usage:   "Update the name of a group",
 							},
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
 						},
 						Action: func(ctx *cli.Context) error {
 							groupId := ctx.Args().First()
 							name := ctx.String("name")
-							public := ctx.Bool("public")
+							network := ctx.String("network")
 							if groupId == "" {
 								return errors.New("no ID provided")
 							}
-							_, err := groups.UpdateGroup(groupId, name, public)
+							_, err := groups.UpdateGroup(groupId, name, network)
 							return err
 						},
 					},
@@ -167,12 +165,20 @@ func main() {
 						Aliases:   []string{"d"},
 						Usage:     "Delete a group by ID",
 						ArgsUsage: "[ID of group]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							groupId := ctx.Args().First()
+							network := ctx.String("network")
 							if groupId == "" {
 								return errors.New("no ID provided")
 							}
-							err := groups.DeleteGroup(groupId)
+							err := groups.DeleteGroup(groupId, network)
 							return err
 						},
 					},
@@ -181,12 +187,20 @@ func main() {
 						Aliases:   []string{"g"},
 						Usage:     "Get group info by ID",
 						ArgsUsage: "[ID of group]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							groupId := ctx.Args().First()
+							network := ctx.String("network")
 							if groupId == "" {
 								return errors.New("no ID provided")
 							}
-							_, err := groups.GetGroup(groupId)
+							_, err := groups.GetGroup(groupId, network)
 							return err
 						},
 					},
@@ -195,16 +209,24 @@ func main() {
 						Aliases:   []string{"a"},
 						Usage:     "Add a file to a group",
 						ArgsUsage: "[group id] [file id]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							groupId := ctx.Args().First()
 							fileId := ctx.Args().Get(1)
+							network := ctx.String("network")
 							if groupId == "" {
 								return errors.New("no group id provided")
 							}
 							if fileId == "" {
 								return errors.New("no file id provided")
 							}
-							err := groups.AddFile(groupId, fileId)
+							err := groups.AddFile(groupId, fileId, network)
 							return err
 						},
 					},
@@ -213,16 +235,24 @@ func main() {
 						Aliases:   []string{"r"},
 						Usage:     "Remove a file from a group",
 						ArgsUsage: "[group id] [file id]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							groupId := ctx.Args().First()
 							fileId := ctx.Args().Get(1)
+							network := ctx.String("network")
 							if groupId == "" {
 								return errors.New("no group id provided")
 							}
 							if fileId == "" {
 								return errors.New("no file id provided")
 							}
-							err := groups.RemoveFile(groupId, fileId)
+							err := groups.RemoveFile(groupId, fileId, network)
 							return err
 						},
 					},

@@ -12,12 +12,17 @@ import (
 	"strings"
 )
 
-func GetGroup(id string) (types.GroupCreateResponse, error) {
+func GetGroup(id string, network string) (types.GroupCreateResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GroupCreateResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GroupCreateResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s/%s", config.GetAPIHost(), networkParam, id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -53,21 +58,22 @@ func GetGroup(id string) (types.GroupCreateResponse, error) {
 
 }
 
-func ListGroups(amount string, isPublic bool, name string, token string) (types.GroupListResponse, error) {
+func ListGroups(amount string, name string, token string, network string) (types.GroupListResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GroupListResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/groups?", config.GetAPIHost())
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GroupListResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s?", config.GetAPIHost(), networkParam)
 
 	params := []string{}
 
 	if amount != "" {
 		params = append(params, "limit="+amount)
-	}
-
-	if isPublic {
-		params = append(params, "isPublic=true")
 	}
 
 	if name != "" {
@@ -117,15 +123,14 @@ func ListGroups(amount string, isPublic bool, name string, token string) (types.
 
 }
 
-func CreateGroup(name string, isPublic bool) (types.GroupCreateResponse, error) {
+func CreateGroup(name string, network string) (types.GroupCreateResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GroupCreateResponse{}, err
 	}
 
 	payload := types.GroupCreateBody{
-		Name:     name,
-		IsPublic: isPublic,
+		Name: name,
 	}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -134,7 +139,12 @@ func CreateGroup(name string, isPublic bool) (types.GroupCreateResponse, error) 
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://%s/v3/files/groups", config.GetAPIHost())
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GroupCreateResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s", config.GetAPIHost(), networkParam)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -170,15 +180,14 @@ func CreateGroup(name string, isPublic bool) (types.GroupCreateResponse, error) 
 
 }
 
-func UpdateGroup(id string, name string, isPublic bool) (types.GroupCreateResponse, error) {
+func UpdateGroup(id string, name string, network string) (types.GroupCreateResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GroupCreateResponse{}, err
 	}
 
 	payload := types.GroupCreateBody{
-		Name:     name,
-		IsPublic: isPublic,
+		Name: name,
 	}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -186,8 +195,12 @@ func UpdateGroup(id string, name string, isPublic bool) (types.GroupCreateRespon
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GroupCreateResponse{}, err
+	}
 
-	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
+	url := fmt.Sprintf("https://%s/v3/groups/%s/%s", config.GetAPIHost(), networkParam, id)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -223,12 +236,17 @@ func UpdateGroup(id string, name string, isPublic bool) (types.GroupCreateRespon
 
 }
 
-func DeleteGroup(id string) error {
+func DeleteGroup(id string, network string) error {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s/%s", config.GetAPIHost(), networkParam, id)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -254,13 +272,18 @@ func DeleteGroup(id string) error {
 
 }
 
-func AddFile(groupId string, fileId string) error {
+func AddFile(groupId string, fileId string, network string) error {
 
 	jwt, err := common.FindToken()
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/groups/%s/ids/%s", config.GetAPIHost(), groupId, fileId)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s/%s/ids/%s", config.GetAPIHost(), networkParam, groupId, fileId)
 
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
@@ -285,13 +308,18 @@ func AddFile(groupId string, fileId string) error {
 	return nil
 }
 
-func RemoveFile(groupId string, fileId string) error {
+func RemoveFile(groupId string, fileId string, network string) error {
 
 	jwt, err := common.FindToken()
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/groups/%s/ids/%s", config.GetAPIHost(), groupId, fileId)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/groups/%s/%s/ids/%s", config.GetAPIHost(), networkParam, groupId, fileId)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
