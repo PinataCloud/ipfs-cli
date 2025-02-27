@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"pinata/internal/common"
+	"pinata/internal/config"
 	"pinata/internal/types"
 	"strings"
 )
@@ -16,7 +17,7 @@ func GetGroup(id string) (types.GroupCreateResponse, error) {
 	if err != nil {
 		return types.GroupCreateResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -57,7 +58,7 @@ func ListGroups(amount string, isPublic bool, name string, token string) (types.
 	if err != nil {
 		return types.GroupListResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups?")
+	url := fmt.Sprintf("https://%s/v3/files/groups?", config.GetAPIHost())
 
 	params := []string{}
 
@@ -133,7 +134,7 @@ func CreateGroup(name string, isPublic bool) (types.GroupCreateResponse, error) 
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups")
+	url := fmt.Sprintf("https://%s/v3/files/groups", config.GetAPIHost())
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -186,7 +187,7 @@ func UpdateGroup(id string, name string, isPublic bool) (types.GroupCreateRespon
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -227,7 +228,7 @@ func DeleteGroup(id string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/groups/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -259,7 +260,7 @@ func AddFile(groupId string, fileId string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups/%s/ids/%s", groupId, fileId)
+	url := fmt.Sprintf("https://%s/v3/files/groups/%s/ids/%s", config.GetAPIHost(), groupId, fileId)
 
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
@@ -290,7 +291,7 @@ func RemoveFile(groupId string, fileId string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/groups/%s/ids/%s", groupId, fileId)
+	url := fmt.Sprintf("https://%s/v3/files/groups/%s/ids/%s", config.GetAPIHost(), groupId, fileId)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {

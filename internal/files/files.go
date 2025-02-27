@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"pinata/internal/common"
+	"pinata/internal/config"
 	"pinata/internal/gateways"
 	"pinata/internal/types"
 	"strings"
@@ -17,7 +18,7 @@ func DeleteFile(id string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -48,7 +49,7 @@ func GetFile(id string) (types.GetFileResponse, error) {
 	if err != nil {
 		return types.GetFileResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -99,7 +100,7 @@ func UpdateFile(id string, name string) (types.GetFileResponse, error) {
 		return types.GetFileResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/%s", id)
+	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
@@ -140,7 +141,7 @@ func ListFiles(amount string, pageToken string, cidPending bool, name string, ci
 	if err != nil {
 		return types.ListResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files?")
+	url := fmt.Sprintf("https://%s/v3/files?", config.GetAPIHost())
 
 	params := []string{}
 
@@ -222,7 +223,7 @@ func GetSwapHistory(cid string, domain string) (types.GetSwapHistoryResponse, er
 	if err != nil {
 		return types.GetSwapHistoryResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/swap/%s?", cid)
+	url := fmt.Sprintf("https://%s/v3/files/swap/%s?", config.GetAPIHost(), cid)
 
 	params := []string{}
 
@@ -280,7 +281,7 @@ func AddSwap(cid string, swapCid string) (types.AddSwapResponse, error) {
 	if err != nil {
 		return types.AddSwapResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/swap/%s", cid)
+	url := fmt.Sprintf("https://%s/v3/files/swap/%s", config.GetAPIHost(), cid)
 
 	payload := types.AddSwapBody{
 		SwapCid: swapCid,
@@ -333,7 +334,7 @@ func RemoveSwap(cid string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/swap/%s", cid)
+	url := fmt.Sprintf("https://%s/v3/files/swap/%s", config.GetAPIHost(), cid)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 

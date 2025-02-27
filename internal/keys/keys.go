@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"pinata/internal/common"
+	"pinata/internal/config"
 	"pinata/internal/types"
 	"strings"
 )
@@ -16,7 +17,7 @@ func ListKeys(name string, revoked bool, limitedUse bool, exhausted bool, offset
 	if err != nil {
 		return types.KeyListResponse{}, err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/pinata/keys?")
+	url := fmt.Sprintf("https://%s/v3/pinata/keys?", config.GetAPIHost())
 
 	params := []string{}
 
@@ -137,7 +138,7 @@ func CreateKey(name string, admin bool, uses int, endpoints []string) (types.Cre
 		return types.CreateKeyResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/pinata/keys")
+	url := fmt.Sprintf("https://%s/v3/pinata/keys", config.GetAPIHost())
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.CreateKeyResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -178,7 +179,7 @@ func RevokeKey(id string) error {
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/pinata/keys/%s", id)
+	url := fmt.Sprintf("https://%s/v3/pinata/keys/%s", config.GetAPIHost(), id)
 
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {

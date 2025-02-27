@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"pinata/internal/config"
 	"pinata/internal/gateways"
 	"pinata/internal/utils"
 	"time"
@@ -30,8 +31,7 @@ func SaveJWT() error {
 	if err != nil {
 		return err
 	}
-	host := GetHost()
-	url := fmt.Sprintf("https://%s/data/testAuthentication", host)
+	url := fmt.Sprintf("https://%s/data/testAuthentication", config.GetAPIHost())
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"pinata/internal/common"
+	"pinata/internal/config"
 	"pinata/internal/types"
 	"pinata/internal/utils"
 	"strings"
@@ -40,7 +41,7 @@ func SetGateway(domain string) error {
 		if err != nil {
 			return err
 		}
-		url := fmt.Sprintf("https://api.pinata.cloud/v3/ipfs/gateways")
+		url := fmt.Sprintf("https://%s/v3/ipfs/gateways", config.GetAPIHost())
 
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
@@ -129,7 +130,7 @@ func GetSignedURL(cid string, expires int) (types.GetSignedURLResponse, error) {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://api.pinata.cloud/v3/files/sign")
+	url := fmt.Sprintf("https://%s/v3/files/sign", config.GetAPIHost())
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("failed to create the request"))

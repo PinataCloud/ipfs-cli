@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"pinata/internal/common"
+	cliConfig "pinata/internal/config"
 	"pinata/internal/types"
 	"strings"
 	"time"
@@ -74,7 +75,7 @@ func regularUpload(filePath string, groupId string, name string, verbose bool) (
 		requestBody = newProgressReader(body, totalSize)
 	}
 
-	url := fmt.Sprintf("https://uploads.pinata.cloud/v3/files")
+	url := fmt.Sprintf("https://%s/v3/files", cliConfig.GetUploadsHost())
 	req, err := http.NewRequest("POST", url, requestBody)
 	if err != nil {
 		return types.UploadResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -179,7 +180,9 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 		HttpClient: http.DefaultClient,
 	}
 
-	client, err := tus.NewClient("https://uploads.pinata.cloud/v3/files", config)
+	uploadHost := cliConfig.GetUploadsHost()
+	url := fmt.Sprintf("https://%s/v3/files", uploadHost)
+	client, err := tus.NewClient(url, config)
 	if err != nil {
 		return types.UploadResponse{}, fmt.Errorf("failed to create TUS client: %w", err)
 	}
@@ -253,7 +256,7 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	urlParts := strings.Split(uploadURL, "/")
 	fileId := urlParts[len(urlParts)-2]
 
-	apiURL := fmt.Sprintf("https://api.pinata.cloud/v3/files/%s", fileId)
+	apiURL := fmt.Sprintf("https://%s/v3/files/%s", cliConfig.GetAPIHost(), fileId)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return types.UploadResponse{}, fmt.Errorf("failed to create response request: %w", err)
