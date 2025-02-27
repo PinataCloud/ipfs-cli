@@ -478,12 +478,20 @@ func main() {
 						Aliases:   []string{"o"},
 						Usage:     "Open a file in the browser",
 						ArgsUsage: "[CID of the file]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							cid := ctx.Args().First()
+							network := ctx.String("network")
 							if cid == "" {
 								return errors.New("No CID provided")
 							}
-							err := gateways.OpenCID(cid)
+							err := gateways.OpenCID(cid, network)
 							return err
 						},
 					},
@@ -507,7 +515,7 @@ func main() {
 							if err != nil {
 								return errors.New("Invalid expire time")
 							}
-							_, err = gateways.GetSignedURL(cid, expiresInt)
+							_, err = gateways.GetAccessLink(cid, expiresInt)
 							return err
 						},
 					},

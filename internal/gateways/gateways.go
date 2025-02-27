@@ -101,7 +101,7 @@ func SetGateway(domain string) error {
 	return nil
 }
 
-func GetSignedURL(cid string, expires int) (types.GetSignedURLResponse, error) {
+func GetAccessLink(cid string, expires int) (types.GetSignedURLResponse, error) {
 
 	jwt, err := common.FindToken()
 	if err != nil {
@@ -130,7 +130,7 @@ func GetSignedURL(cid string, expires int) (types.GetSignedURLResponse, error) {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://%s/v3/files/sign", config.GetAPIHost())
+	url := fmt.Sprintf("https://%s/v3/files/download_link", config.GetAPIHost())
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -163,14 +163,38 @@ func GetSignedURL(cid string, expires int) (types.GetSignedURLResponse, error) {
 	return response, nil
 }
 
-func OpenCID(cid string) error {
-	data, err := GetSignedURL(cid, 30)
+func Convert(cid string) (string, error) {
+	domain, err := FindGatewayDomain()
 	if err != nil {
-		return fmt.Errorf("Problem creating URL %d", err)
+		return "", err
 	}
-	err = open.Run(data.Data)
-	if err != nil {
-		return fmt.Errorf("Problem opening URL %d", err)
+
+	url := fmt.Sprintf("https://%s/ipfs/%s", domain, cid)
+	fmt.Println(url)
+
+	return url, nil
+}
+
+func OpenCID(cid string, network string) error {
+	if network == "public" {
+		url, err := Convert(cid)
+		if err != nil {
+			return fmt.Errorf("problem creating URL: %w", err)
+		}
+		err = open.Run(url)
+		if err != nil {
+			return fmt.Errorf("problem opening URL: %w", err)
+		}
+		return nil
+	} else {
+		data, err := GetAccessLink(cid, 30)
+		if err != nil {
+			return fmt.Errorf("problem creating URL: %w", err)
+		}
+		err = open.Run(data.Data)
+		if err != nil {
+			return fmt.Errorf("problem opening URL: %w", err)
+		}
+		return nil
 	}
-	return nil
 }
