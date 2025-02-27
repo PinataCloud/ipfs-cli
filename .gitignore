@@ -1,0 +1,7 @@
+dist/
+pinata-go-cli
+pinata
+.idea
+.vscode
+gon.hcl
+.DS_Store
