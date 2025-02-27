@@ -2,12 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"pinata/internal/auth"
+	"pinata/internal/config"
 	"pinata/internal/files"
 	"pinata/internal/gateways"
 	"pinata/internal/groups"
@@ -236,12 +238,20 @@ func main() {
 						Aliases:   []string{"d"},
 						Usage:     "Delete a file by ID",
 						ArgsUsage: "[ID of file]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							fileId := ctx.Args().First()
+							network := ctx.String("network")
 							if fileId == "" {
 								return errors.New("no file ID provided")
 							}
-							err := files.DeleteFile(fileId)
+							err := files.DeleteFile(fileId, network)
 							return err
 						},
 					},
@@ -250,12 +260,20 @@ func main() {
 						Aliases:   []string{"g"},
 						Usage:     "Get file info by ID",
 						ArgsUsage: "[ID of file]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							fileId := ctx.Args().First()
+							network := ctx.String("network")
 							if fileId == "" {
 								return errors.New("no CID provided")
 							}
-							_, err := files.GetFile(fileId)
+							_, err := files.GetFile(fileId, network)
 							return err
 						},
 					},
@@ -270,14 +288,20 @@ func main() {
 								Aliases: []string{"n"},
 								Usage:   "Update the name of a file",
 							},
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
 						},
 						Action: func(ctx *cli.Context) error {
 							fileId := ctx.Args().First()
 							name := ctx.String("name")
+							network := ctx.String("network")
 							if fileId == "" {
 								return errors.New("no ID provided")
 							}
-							_, err := files.UpdateFile(fileId, name)
+							_, err := files.UpdateFile(fileId, name, network)
 							return err
 						},
 					},
@@ -326,6 +350,11 @@ func main() {
 								Aliases: []string{"kv"},
 								Usage:   "Filter results by metadata keyvalues (format: key=value)",
 							},
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
 						},
 						Action: func(ctx *cli.Context) error {
 							amount := ctx.String("amount")
@@ -337,13 +366,14 @@ func main() {
 							cidPending := ctx.Bool("cidPending")
 							keyvaluesSlice := ctx.StringSlice("keyvalues")
 							keyvalues := make(map[string]string)
+							network := ctx.String("network")
 							for _, kv := range keyvaluesSlice {
 								parts := strings.SplitN(kv, "=", 2)
 								if len(parts) == 2 {
 									keyvalues[parts[0]] = parts[1]
 								}
 							}
-							_, err := files.ListFiles(amount, token, cidPending, name, cid, group, mime, keyvalues)
+							_, err := files.ListFiles(amount, token, cidPending, name, cid, group, mime, keyvalues, network)
 							return err
 						},
 					},
@@ -359,13 +389,21 @@ func main() {
 						Aliases:   []string{"l"},
 						Usage:     "List swaps for a given gateway domain or for your config gateway domain",
 						ArgsUsage: "[cid] [optional gateway domain]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							cid := ctx.Args().First()
 							domain := ctx.Args().Get(1)
+							network := ctx.String("network")
 							if cid == "" {
 								return errors.New("No CID provided")
 							}
-							_, err := files.GetSwapHistory(cid, domain)
+							_, err := files.GetSwapHistory(cid, domain, network)
 							return err
 						},
 					},
@@ -374,16 +412,24 @@ func main() {
 						Aliases:   []string{"a"},
 						Usage:     "Add a swap for a CID",
 						ArgsUsage: "[cid] [swap cid]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							cid := ctx.Args().First()
 							swapCid := ctx.Args().Get(1)
+							network := ctx.String("network")
 							if cid == "" {
 								return errors.New("No CID provided")
 							}
 							if swapCid == "" {
 								return errors.New("No swap CID provided")
 							}
-							_, err := files.AddSwap(cid, swapCid)
+							_, err := files.AddSwap(cid, swapCid, network)
 							return err
 						},
 					},
@@ -392,12 +438,20 @@ func main() {
 						Aliases:   []string{"d"},
 						Usage:     "Remeove a swap for a CID",
 						ArgsUsage: "[cid]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
 							cid := ctx.Args().First()
+							network := ctx.String("network")
 							if cid == "" {
 								return errors.New("No CID provided")
 							}
-							err := files.RemoveSwap(cid)
+							err := files.RemoveSwap(cid, network)
 							return err
 						},
 					},
@@ -554,6 +608,32 @@ func main() {
 							}
 							err := keys.RevokeKey(key)
 							return err
+						},
+					},
+				},
+			},
+			{
+				Name:    "config",
+				Aliases: []string{"cfg"},
+				Usage:   "Configure Pinata CLI settings",
+				Subcommands: []*cli.Command{
+					{
+						Name:      "network",
+						Aliases:   []string{"net"},
+						Usage:     "Set default network (public or private)",
+						ArgsUsage: "[network]",
+						Action: func(ctx *cli.Context) error {
+							network := ctx.Args().First()
+							if network == "" {
+								// If no parameter, show current setting
+								current, err := config.GetDefaultNetwork()
+								if err != nil {
+									return err
+								}
+								fmt.Printf("Current default network: %s\n", current)
+								return nil
+							}
+							return config.SetDefaultNetwork(network)
 						},
 					},
 				},

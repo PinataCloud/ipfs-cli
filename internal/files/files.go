@@ -13,12 +13,17 @@ import (
 	"strings"
 )
 
-func DeleteFile(id string) error {
+func DeleteFile(id string, network string) error {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return errors.Join(err, errors.New("Failed to fetch network preference"))
+	}
+
+	url := fmt.Sprintf("https://%s/v3/files/%s/%s", config.GetAPIHost(), networkParam, id)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -44,12 +49,18 @@ func DeleteFile(id string) error {
 
 }
 
-func GetFile(id string) (types.GetFileResponse, error) {
+func GetFile(id string, network string) (types.GetFileResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GetFileResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
+
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GetFileResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/files/%s/%s", config.GetAPIHost(), networkParam, id)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -85,7 +96,7 @@ func GetFile(id string) (types.GetFileResponse, error) {
 
 }
 
-func UpdateFile(id string, name string) (types.GetFileResponse, error) {
+func UpdateFile(id string, name string, network string) (types.GetFileResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GetFileResponse{}, err
@@ -100,7 +111,12 @@ func UpdateFile(id string, name string) (types.GetFileResponse, error) {
 		return types.GetFileResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://%s/v3/files/%s", config.GetAPIHost(), id)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GetFileResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/files/%s/%s", config.GetAPIHost(), networkParam, id)
 
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
@@ -136,12 +152,18 @@ func UpdateFile(id string, name string) (types.GetFileResponse, error) {
 
 }
 
-func ListFiles(amount string, pageToken string, cidPending bool, name string, cid string, group string, mime_type string, keyvalues map[string]string) (types.ListResponse, error) {
+func ListFiles(amount string, pageToken string, cidPending bool, name string, cid string, group string, mime_type string, keyvalues map[string]string, network string) (types.ListResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.ListResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files?", config.GetAPIHost())
+
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.ListResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/files/%s?", config.GetAPIHost(), networkParam)
 
 	params := []string{}
 
@@ -218,12 +240,16 @@ func ListFiles(amount string, pageToken string, cidPending bool, name string, ci
 
 }
 
-func GetSwapHistory(cid string, domain string) (types.GetSwapHistoryResponse, error) {
+func GetSwapHistory(cid string, domain string, network string) (types.GetSwapHistoryResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GetSwapHistoryResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/swap/%s?", config.GetAPIHost(), cid)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GetSwapHistoryResponse{}, err
+	}
+	url := fmt.Sprintf("https://%s/v3/files/%s/swap/%s?", config.GetAPIHost(), networkParam, cid)
 
 	params := []string{}
 
@@ -276,12 +302,17 @@ func GetSwapHistory(cid string, domain string) (types.GetSwapHistoryResponse, er
 
 }
 
-func AddSwap(cid string, swapCid string) (types.AddSwapResponse, error) {
+func AddSwap(cid string, swapCid string, network string) (types.AddSwapResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.AddSwapResponse{}, err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/swap/%s", config.GetAPIHost(), cid)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.AddSwapResponse{}, err
+	}
+
+	url := fmt.Sprintf("https://%s/v3/files/%s/swap/%s", config.GetAPIHost(), networkParam, cid)
 
 	payload := types.AddSwapBody{
 		SwapCid: swapCid,
@@ -329,12 +360,16 @@ func AddSwap(cid string, swapCid string) (types.AddSwapResponse, error) {
 
 }
 
-func RemoveSwap(cid string) error {
+func RemoveSwap(cid string, network string) error {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf("https://%s/v3/files/swap/%s", config.GetAPIHost(), cid)
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return errors.Join(err, errors.New("Failed to get network preference"))
+	}
+	url := fmt.Sprintf("https://%s/v3/files/%s/swap/%s", config.GetAPIHost(), networkParam, cid)
 
 	req, err := http.NewRequest("DELETE", url, nil)
 
