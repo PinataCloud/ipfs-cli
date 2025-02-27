@@ -173,3 +173,13 @@ type KeyItem struct {
 	CreatedAt string      `json:"createdAt"`
 	UpdatedAt string      `json:"updatedAt"`
 }
+
+type PinataOptions struct {
+	CidVersion int    `json:"cidVersion"`
+	GroupId    string `json:"groupId,omitempty"`
+}
+
+type PinataMetadata struct {
+	Name      string            `json:"name"`
+	KeyValues map[string]string `json:"keyvalues,omitempty"`
+}

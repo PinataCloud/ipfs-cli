@@ -6,3 +6,5 @@ pinata
 gon.hcl
 .DS_Store
 Makefile
+main
+test

@@ -34,6 +34,21 @@ func Upload(filePath string, groupId string, name string, verbose bool, network 
 		return types.UploadResponse{}, err
 	}
 
+	if stats.IsDir() {
+		// Check if network is private and return error if so
+		networkParam, err := config.GetNetworkParam(network)
+		if err != nil {
+			return types.UploadResponse{}, err
+		}
+
+		if networkParam == "private" {
+			return types.UploadResponse{}, errors.New("folders are not supported on the private network")
+		}
+
+		// For folders, we use a different API endpoint
+		return folderUpload(filePath, groupId, name, verbose)
+	}
+
 	if stats.Size() > MAX_SIZE_REGULAR_UPLOAD {
 		return uploadWithTUS(filePath, groupId, name, verbose, stats, network)
 	}
@@ -296,6 +311,123 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	return response, nil
 }
 
+func folderUpload(filePath string, groupId string, name string, verbose bool) (types.UploadResponse, error) {
+	jwt, err := common.FindToken()
+	if err != nil {
+		return types.UploadResponse{}, err
+	}
+
+	stats, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return types.UploadResponse{}, errors.Join(err, errors.New("folder does not exist"))
+	}
+
+	files, err := pathsFinder(filePath, stats)
+	if err != nil {
+		return types.UploadResponse{}, err
+	}
+
+	body := &bytes.Buffer{}
+	contentType, err := createPinataMultipartRequest(filePath, files, body, stats, groupId, name)
+	if err != nil {
+		return types.UploadResponse{}, err
+	}
+
+	var requestBody io.Reader
+	if !verbose {
+		requestBody = body
+	} else {
+		totalSize := int64(body.Len())
+		fmt.Printf("Uploading folder %s (%s)\n", stats.Name(), formatSize(int(totalSize)))
+		requestBody = newProgressReader(body, totalSize)
+	}
+
+	// Use the pinning endpoint for folders
+	url := fmt.Sprintf("https://%s/pinning/pinFileToIPFS", cliConfig.GetAPIHost())
+	req, err := http.NewRequest("POST", url, requestBody)
+	if err != nil {
+		return types.UploadResponse{}, errors.Join(err, errors.New("failed to create the request"))
+	}
+	req.Header.Set("Authorization", "Bearer "+string(jwt))
+	req.Header.Set("content-type", contentType)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return types.UploadResponse{}, errors.Join(err, errors.New("failed to send the request"))
+	}
+	if resp.StatusCode != 200 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return types.UploadResponse{}, fmt.Errorf("server returned an error %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	defer resp.Body.Close()
+
+	// Parse the pinning API response
+	var pinningResponse struct {
+		ID            string            `json:"ID"`
+		Name          string            `json:"Name"`
+		IpfsHash      string            `json:"IpfsHash"`
+		PinSize       int               `json:"PinSize"`
+		Timestamp     string            `json:"Timestamp"`
+		NumberOfFiles int               `json:"NumberOfFiles"`
+		MimeType      string            `json:"MimeType"`
+		GroupId       *string           `json:"GroupId"`
+		Keyvalues     map[string]string `json:"Keyvalues"`
+		IsDuplicate   bool              `json:"isDuplicate"`
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(&pinningResponse)
+	if err != nil {
+		return types.UploadResponse{}, err
+	}
+
+	// Map the pinning API response to our UploadResponse format following the TypeScript mapping
+	response := types.UploadResponse{
+		Data: struct {
+			Id            string            `json:"id"`
+			Name          string            `json:"name"`
+			Cid           string            `json:"cid"`
+			Size          int               `json:"size"`
+			CreatedAt     string            `json:"created_at"`
+			NumberOfFiles int               `json:"number_of_files"`
+			MimeType      string            `json:"mime_type"`
+			GroupId       *string           `json:"group_id"`
+			KeyValues     map[string]string `json:"keyvalues"`
+			Vectorized    bool              `json:"vectorized"`
+			Network       string            `json:"network"`
+			IsDuplicate   bool              `json:"is_duplicate,omitempty"`
+		}{
+			Id:            pinningResponse.ID,
+			Name:          pinningResponse.Name,
+			Cid:           pinningResponse.IpfsHash,
+			Size:          pinningResponse.PinSize,
+			CreatedAt:     pinningResponse.Timestamp,
+			NumberOfFiles: pinningResponse.NumberOfFiles,
+			MimeType:      pinningResponse.MimeType,
+			GroupId:       pinningResponse.GroupId,
+			KeyValues:     pinningResponse.Keyvalues,
+			Vectorized:    false,
+			Network:       "public",
+			IsDuplicate:   pinningResponse.IsDuplicate,
+		},
+	}
+
+	// If groupId is specified, set it in the response
+	if groupId != "" {
+		response.Data.GroupId = &groupId
+	}
+
+	formattedJSON, err := json.MarshalIndent(response.Data, "", "    ")
+	if err != nil {
+		return types.UploadResponse{}, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return response, nil
+}
+
 func createMultipartRequest(filePath string, files []string, body io.Writer, stats os.FileInfo, groupId string, name string, network string) (string, error) {
 	contentType := ""
 	writer := multipart.NewWriter(body)
@@ -359,6 +491,90 @@ func createMultipartRequest(filePath string, files []string, body io.Writer, sta
 
 	contentType = writer.FormDataContentType()
 
+	return contentType, nil
+}
+
+func createPinataMultipartRequest(filePath string, files []string, body io.Writer, stats os.FileInfo, groupId string, name string) (string, error) {
+	contentType := ""
+	writer := multipart.NewWriter(body)
+
+	// Add files to the multipart request
+	fileIsASingleFile := !stats.IsDir()
+	for _, f := range files {
+		file, err := os.Open(f)
+		if err != nil {
+			return contentType, err
+		}
+		defer func(file *os.File) {
+			err := file.Close()
+			if err != nil {
+				log.Fatal("could not close file")
+			}
+		}(file)
+
+		var part io.Writer
+		if fileIsASingleFile {
+			part, err = writer.CreateFormFile("file", filepath.Base(f))
+		} else {
+			relPath, _ := filepath.Rel(filePath, f)
+			part, err = writer.CreateFormFile("file", filepath.Join(stats.Name(), relPath))
+		}
+		if err != nil {
+			return contentType, err
+		}
+		_, err = io.Copy(part, file)
+		if err != nil {
+			return contentType, err
+		}
+	}
+
+	// Create and add PinataOptions
+	pinataOptions := types.PinataOptions{
+		CidVersion: 1, // Default CID version
+	}
+
+	// Add groupId to options if provided
+	if groupId != "" {
+		pinataOptions.GroupId = groupId
+	}
+
+	optionsBytes, err := json.Marshal(pinataOptions)
+	if err != nil {
+		return contentType, err
+	}
+
+	err = writer.WriteField("pinataOptions", string(optionsBytes))
+	if err != nil {
+		return contentType, err
+	}
+
+	// Create and add PinataMetadata
+	nameToUse := stats.Name()
+	if name != "nil" {
+		nameToUse = name
+	}
+
+	pinataMetadata := types.PinataMetadata{
+		Name:      nameToUse,
+		KeyValues: make(map[string]string), // Empty keyvalues for now
+	}
+
+	metadataBytes, err := json.Marshal(pinataMetadata)
+	if err != nil {
+		return contentType, err
+	}
+
+	err = writer.WriteField("pinataMetadata", string(metadataBytes))
+	if err != nil {
+		return contentType, err
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return contentType, err
+	}
+
+	contentType = writer.FormDataContentType()
 	return contentType, nil
 }
 
