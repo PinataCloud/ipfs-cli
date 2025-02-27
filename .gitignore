@@ -5,3 +5,4 @@ pinata
 .vscode
 gon.hcl
 .DS_Store
+Makefile

@@ -56,16 +56,22 @@ func main() {
 						Name:  "verbose",
 						Usage: "Show upload progress",
 					},
+					&cli.StringFlag{
+						Name:    "network",
+						Aliases: []string{"net"},
+						Usage:   "Specify the network (public or private). Uses default if not specified",
+					},
 				},
 				Action: func(ctx *cli.Context) error {
 					filePath := ctx.Args().First()
 					groupId := ctx.String("group")
 					name := ctx.String("name")
 					verbose := ctx.Bool("verbose")
+					network := ctx.String("network")
 					if filePath == "" {
 						return errors.New("no file path provided")
 					}
-					_, err := uploads.Upload(filePath, groupId, name, verbose)
+					_, err := uploads.Upload(filePath, groupId, name, verbose, network)
 					return err
 				},
 			},

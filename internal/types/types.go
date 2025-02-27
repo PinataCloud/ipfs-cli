@@ -2,15 +2,18 @@ package types
 
 type UploadResponse struct {
 	Data struct {
-		Id            string `json:"id"`
-		Name          string `json:"name"`
-		Cid           string `json:"cid"`
-		Size          int    `json:"size"`
-		NumberOfFiles int    `json:"number_of_files"`
-		MimeType      string `json:"mime_type"`
-		CreatedAt     string `json:"created_at"`
-		GroupId       string `json:"group_id,omitempty"`
-		IsDuplicate   bool   `json:"is_duplicate,omitempty"`
+		Id            string            `json:"id"`
+		Name          string            `json:"name"`
+		Cid           string            `json:"cid"`
+		Size          int               `json:"size"`
+		CreatedAt     string            `json:"created_at"`
+		NumberOfFiles int               `json:"number_of_files"`
+		MimeType      string            `json:"mime_type"`
+		GroupId       *string           `json:"group_id"`
+		KeyValues     map[string]string `json:"keyvalues"`
+		Vectorized    bool              `json:"vectorized"`
+		Network       string            `json:"network"`
+		IsDuplicate   bool              `json:"is_duplicate,omitempty"`
 	} `json:"data"`
 }
 

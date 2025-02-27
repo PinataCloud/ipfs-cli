@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"pinata/internal/common"
+	"pinata/internal/config"
 	cliConfig "pinata/internal/config"
 	"pinata/internal/types"
 	"strings"
@@ -26,7 +27,7 @@ const (
 	CHUNK_SIZE              = 10 * 1024 * 1024  // Chunk size
 )
 
-func Upload(filePath string, groupId string, name string, verbose bool) (types.UploadResponse, error) {
+func Upload(filePath string, groupId string, name string, verbose bool, network string) (types.UploadResponse, error) {
 
 	stats, err := os.Stat(filePath)
 	if err != nil {
@@ -34,10 +35,10 @@ func Upload(filePath string, groupId string, name string, verbose bool) (types.U
 	}
 
 	if stats.Size() > MAX_SIZE_REGULAR_UPLOAD {
-		return uploadWithTUS(filePath, groupId, name, verbose, stats)
+		return uploadWithTUS(filePath, groupId, name, verbose, stats, network)
 	}
 
-	return regularUpload(filePath, groupId, name, verbose)
+	return regularUpload(filePath, groupId, name, verbose, network)
 }
 
 type progressReader struct {
@@ -45,7 +46,7 @@ type progressReader struct {
 	bar *progressbar.ProgressBar
 }
 
-func regularUpload(filePath string, groupId string, name string, verbose bool) (types.UploadResponse, error) {
+func regularUpload(filePath string, groupId string, name string, verbose bool, network string) (types.UploadResponse, error) {
 
 	jwt, err := common.FindToken()
 	if err != nil {
@@ -61,7 +62,7 @@ func regularUpload(filePath string, groupId string, name string, verbose bool) (
 		return types.UploadResponse{}, err
 	}
 	body := &bytes.Buffer{}
-	contentType, err := createMultipartRequest(filePath, files, body, stats, groupId, name)
+	contentType, err := createMultipartRequest(filePath, files, body, stats, groupId, name, network)
 	if err != nil {
 		return types.UploadResponse{}, err
 	}
@@ -166,7 +167,7 @@ func formatSize(bytes int) string {
 	return formattedSize
 }
 
-func uploadWithTUS(filePath string, groupId string, name string, verbose bool, stats os.FileInfo) (types.UploadResponse, error) {
+func uploadWithTUS(filePath string, groupId string, name string, verbose bool, stats os.FileInfo, network string) (types.UploadResponse, error) {
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.UploadResponse{}, err
@@ -194,9 +195,15 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	}
 	defer f.Close()
 
+	networkParam, err := cliConfig.GetNetworkParam(network)
+	if err != nil {
+		return types.UploadResponse{}, err
+	}
+
 	// Create metadata
 	metadata := map[string]string{
 		"filename": filepath.Base(filePath),
+		"network":  networkParam,
 	}
 	if groupId != "" {
 		metadata["group_id"] = groupId
@@ -289,7 +296,7 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	return response, nil
 }
 
-func createMultipartRequest(filePath string, files []string, body io.Writer, stats os.FileInfo, groupId string, name string) (string, error) {
+func createMultipartRequest(filePath string, files []string, body io.Writer, stats os.FileInfo, groupId string, name string, network string) (string, error) {
 	contentType := ""
 	writer := multipart.NewWriter(body)
 
@@ -322,6 +329,13 @@ func createMultipartRequest(filePath string, files []string, body io.Writer, sta
 		}
 	}
 
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return "", err
+	}
+
+	err = writer.WriteField("network", networkParam)
+
 	if groupId != "" {
 		err := writer.WriteField("group_id", groupId)
 		if err != nil {
@@ -333,7 +347,7 @@ func createMultipartRequest(filePath string, files []string, body io.Writer, sta
 	if name != "nil" {
 		nameToUse = name
 	}
-	err := writer.WriteField("name", nameToUse)
+	err = writer.WriteField("name", nameToUse)
 	if err != nil {
 		return contentType, err
 	}
