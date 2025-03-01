@@ -532,11 +532,19 @@ func main() {
 						},
 					},
 					{
-						Name:      "sign",
-						Aliases:   []string{"s"},
-						Usage:     "Get a signed URL for a file by CID",
+						Name:      "link",
+						Aliases:   []string{"l"},
+						Usage:     "Get either an IPFS link for a public file or a temporary access link for a Private IPFS file",
 						ArgsUsage: "[cid of the file, seconds the url is valid for]",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:    "network",
+								Aliases: []string{"net"},
+								Usage:   "Specify the network (public or private). Uses default if not specified",
+							},
+						},
 						Action: func(ctx *cli.Context) error {
+							network := ctx.String("network")
 							cid := ctx.Args().First()
 							if cid == "" {
 								return errors.New("No CID provided")
@@ -551,7 +559,7 @@ func main() {
 							if err != nil {
 								return errors.New("Invalid expire time")
 							}
-							_, err = gateways.GetAccessLink(cid, expiresInt)
+							_, err = gateways.GetAccessLink(cid, expiresInt, network)
 							return err
 						},
 					},

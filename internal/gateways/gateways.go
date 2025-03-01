@@ -101,15 +101,26 @@ func SetGateway(domain string) error {
 	return nil
 }
 
-func GetAccessLink(cid string, expires int) (types.GetSignedURLResponse, error) {
+func GetAccessLink(cid string, expires int, network string) (types.GetSignedURLResponse, error) {
 
 	jwt, err := common.FindToken()
 	if err != nil {
 		return types.GetSignedURLResponse{}, err
 	}
 
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return types.GetSignedURLResponse{}, err
+	}
+
 	domain, err := FindGatewayDomain()
 	if err != nil {
+		return types.GetSignedURLResponse{}, err
+	}
+
+	if networkParam == "public" {
+		url := fmt.Sprintf("https://%s/ipfs/%s", domain, cid)
+		fmt.Println(url)
 		return types.GetSignedURLResponse{}, err
 	}
 
@@ -130,7 +141,7 @@ func GetAccessLink(cid string, expires int) (types.GetSignedURLResponse, error) 
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("Failed to marshal paylod"))
 	}
 
-	url := fmt.Sprintf("https://%s/v3/files/download_link", config.GetAPIHost())
+	url := fmt.Sprintf("https://%s/v3/files/private/download_link", config.GetAPIHost())
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("failed to create the request"))
@@ -187,7 +198,7 @@ func OpenCID(cid string, network string) error {
 		}
 		return nil
 	} else {
-		data, err := GetAccessLink(cid, 30)
+		data, err := GetAccessLink(cid, 30, network)
 		if err != nil {
 			return fmt.Errorf("problem creating URL: %w", err)
 		}
