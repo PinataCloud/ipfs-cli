@@ -21,7 +21,7 @@ curl -fsSL https://cli.pinata.cloud/install | bash
 If you are on MacOS and have homebrew installed you can run the command below to install the CLI
 
 ```
-brew install PinataCloud/files-cli/files-cli
+brew install PinataCloud/ipfs-cli/ipfs-cli
 ```
 
 ### Building from Source
