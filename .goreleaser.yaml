@@ -26,7 +26,7 @@ builds:
     binary: pinata
 
 archives:
-  - format: tar.gz
+  - formats: ["tar.gz"]
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
@@ -38,7 +38,7 @@ archives:
     # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats: ["zip"]
 
 changelog:
   sort: asc
@@ -49,14 +49,14 @@ changelog:
 
 brews:
   - name: files-cli
-    homepage: "https://github.com/PinataCloud/files-cli"
-    description: "Official Pinata Files CLI written in Go"
+    homepage: "https://github.com/PinataCloud/ipfs-cli"
+    description: "Official Pinata IPFS CLI written in Go"
     license: "MIT"
-    url_template: "https://github.com/PinataCloud/files-cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/PinataCloud/ipfs-cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     repository:
       owner: PinataCloud
-      name: homebrew-files-cli
+      name: homebrew-ipfs-cli
       branch: main
     commit_author:
       name: goreleaser-bot
