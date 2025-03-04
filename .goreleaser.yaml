@@ -18,7 +18,7 @@ before:
 builds:
   - env:
       - CGO_ENABLED=0
-    main: ./cmd/pinata
+    main: pinata
     goos:
       - linux
       - windows
