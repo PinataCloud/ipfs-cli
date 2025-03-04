@@ -40,7 +40,7 @@ func DeleteFile(id string, network string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("server Returned an error %d, check CID", resp.StatusCode)
+		return fmt.Errorf("server Returned an error %d, check ID", resp.StatusCode)
 	}
 
 	fmt.Println("File Deleted")
