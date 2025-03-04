@@ -48,7 +48,7 @@ changelog:
       - "^test:"
 
 brews:
-  - name: files-cli
+  - name: ipfs-cli
     homepage: "https://github.com/PinataCloud/ipfs-cli"
     description: "Official Pinata IPFS CLI written in Go"
     license: "MIT"
