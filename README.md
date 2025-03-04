@@ -35,17 +35,17 @@ go version
 Then paste and run the following into your terminal:
 
 ```
-git clone https://github.com/PinataCloud/files-cli && cd files-cli && go install .
+git clone https://github.com/PinataCloud/ipfs-cli && cd ipfs-cli && go install .
 ```
 
 ### Linux Binary
 
-As versions are released you can visit the [Releases](https://github.com/PinataCloud/files-cli/releases) page and download the appropriate binary for your system, them move it into your bin folder.
+As versions are released you can visit the [Releases](https://github.com/PinataCloud/ipfs-cli/releases) page and download the appropriate binary for your system, them move it into your bin folder.
 
 For example, this is how I install the CLI for my Raspberry Pi
 
 ```
-wget https://github.com/PinataCloud/files-cli/releases/download/v0.1.0/files-cli_Linux_arm64.tar.gz
+wget https://github.com/PinataCloud/ipfs-cli/releases/download/v0.1.0/ipfs-cli_Linux_arm64.tar.gz
 
 tar -xzf files-cli_Linux_arm64.tar.gz
 
@@ -54,7 +54,7 @@ sudo mv pinata /usr/bin
 
 ## Usage
 
-The Pinata CLI is equipped with the majortiry of features on the Pinata API.
+The Pinata CLI is equipped with the majortiry of features on both the Public IPFS API and Private IPFS API.
 
 ### `auth`
 
@@ -62,6 +62,25 @@ With the CLI installed you will first need to authenticate it with your [Pinata
 
 ```
 pinata auth
+```
+
+### `config`
+
+Set a default IPFS network, can be either `public` or `private`. You can always change this at any time or override in individual commands.
+
+```
+NAME:
+   pinata config - Configure Pinata CLI settings
+
+USAGE:
+   pinata config command [command options] [arguments...]
+
+COMMANDS:
+   network, net  Set default network (public or private)
+   help, h       Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
 ```
 
 ### `upload`
@@ -77,6 +96,7 @@ OPTIONS:
    --group value, -g value  Upload a file to a specific group by passing in the groupId
    --name value, -n value   Add a name for the file you are uploading. By default it will use the filename on your system. (default: "nil")
    --verbose                Show upload progress (default: false)
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
    --help, -h               show help
 ```
 
@@ -110,7 +130,8 @@ USAGE:
    pinata files get [command options] [ID of file]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `list`
@@ -131,6 +152,7 @@ OPTIONS:
    --token value, -t value                                          Paginate through file results using the pageToken
    --cidPending                                                     Filter results based on whether or not the CID is pending (default: false)
    --keyvalues value, --kv value [ --keyvalues value, --kv value ]  Filter results by metadata keyvalues (format: key=value)
+   --network value, --net value                                     Specify the network (public or private). Uses default if not specified
    --help, -h                                                       show help
 ```
 
@@ -144,8 +166,9 @@ USAGE:
    pinata files update [command options] [ID of file]
 
 OPTIONS:
-   --name value, -n value  Update the name of a file
-   --help, -h              show help
+   --name value, -n value        Update the name of a file
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `delete`
@@ -158,7 +181,8 @@ USAGE:
    pinata files delete [command options] [ID of file]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 ### `groups`
@@ -194,8 +218,8 @@ USAGE:
    pinata groups create [command options] [name of group]
 
 OPTIONS:
-   --public, -p  Determine if the group should be public (default: false)
-   --help, -h    show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `get`
@@ -208,7 +232,8 @@ USAGE:
    pinata groups get [command options] [ID of group]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `list`
@@ -221,11 +246,11 @@ USAGE:
    pinata groups list [command options] [arguments...]
 
 OPTIONS:
-   --public, -p              List only public groups (default: false)
-   --amount value, -a value  The number of groups you would like to return (default: "10")
-   --name value, -n value    Filter groups by name
-   --token value, -t value   Paginate through results using the pageToken
-   --help, -h                show help
+   --amount value, -a value      The number of groups you would like to return (default: "10")
+   --name value, -n value        Filter groups by name
+   --token value, -t value       Paginate through results using the pageToken
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `add`
@@ -238,7 +263,8 @@ USAGE:
    pinata groups add [command options] [group id] [file id]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `remove`
@@ -251,7 +277,8 @@ USAGE:
    pinata groups remove [command options] [group id] [file id]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 ### `gateways`
@@ -266,7 +293,7 @@ USAGE:
 COMMANDS:
    set, s   Set your default gateway to be used by the CLI
    open, o  Open a file in the browser
-   sign, s  Get a signed URL for a file by CID
+   link, l  Get either an IPFS link for a public file or a temporary access link for a Private IPFS file
    help, h  Shows a list of commands or help for one command
 
 OPTIONS:
@@ -274,9 +301,6 @@ OPTIONS:
 ```
 
 #### `set`
-
-> [!TIP]
-> Pass no arguments and get a list of your gateways to choose from!
 
 ```
 NAME:
@@ -289,18 +313,18 @@ OPTIONS:
    --help, -h  show help
 ```
 
-#### `sign`
+#### `link`
 
 ```
 NAME:
-   pinata gateways sign - Get a signed URL for a file by CID
+   pinata gateways link - Get either an IPFS link for a public file or a temporary access link for a Private IPFS file
 
 USAGE:
-   pinata gateways sign [command options] [cid of the file, number of seconds the url is valid for]
-   example: pinata gateways sign bafkreih5aznjvttude6c3wbvqeebb6rlx5wkbzyppv7garjiubll2ceym4 30
+   pinata gateways link [command options] [cid of the file, seconds the url is valid for]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `open`
@@ -313,7 +337,8 @@ USAGE:
    pinata gateways open [command options] [CID of the file]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 ### `keys`
@@ -412,7 +437,8 @@ USAGE:
    pinata swaps list [command options] [cid] [optional gateway domain]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `add`
@@ -425,7 +451,8 @@ USAGE:
    pinata swaps add [command options] [cid] [swap cid]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 #### `delete`
@@ -438,7 +465,8 @@ USAGE:
    pinata swaps delete [command options] [cid]
 
 OPTIONS:
-   --help, -h  show help
+   --network value, --net value  Specify the network (public or private). Uses default if not specified
+   --help, -h                    show help
 ```
 
 ## Contact
