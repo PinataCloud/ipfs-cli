@@ -15,6 +15,7 @@ import (
 	"pinata/internal/config"
 	cliConfig "pinata/internal/config"
 	"pinata/internal/types"
+	"runtime"
 	"strings"
 	"time"
 
@@ -517,7 +518,18 @@ func createPinataMultipartRequest(filePath string, files []string, body io.Write
 			part, err = writer.CreateFormFile("file", filepath.Base(f))
 		} else {
 			relPath, _ := filepath.Rel(filePath, f)
-			part, err = writer.CreateFormFile("file", filepath.Join(stats.Name(), relPath))
+			if runtime.GOOS == "windows" {
+				relPathForward := strings.ReplaceAll(relPath, "\\", "/")
+				folderName := stats.Name()
+				folderNameForward := strings.ReplaceAll(folderName, "\\", "/")
+				fullPath := folderNameForward
+				if relPathForward != "" {
+					fullPath = folderNameForward + "/" + relPathForward
+				}
+				part, err = writer.CreateFormFile("file", fullPath)
+			} else {
+				part, err = writer.CreateFormFile("file", filepath.Join(stats.Name(), relPath))
+			}
 		}
 		if err != nil {
 			return contentType, err
