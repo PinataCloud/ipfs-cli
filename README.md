@@ -1,7 +1,7 @@
 # Pinata IPFS CLI
 
 ![cover](https://dweb.mypinata.cloud/ipfs/QmNcdx9t48z7RQUXUZZHmuc4zBfyBxKLjDfEgmfhiop7j7?img-format=webp)
-The official CLI for the Files API written in Go
+The official CLI for the Pinata API written in Go
 
 ## Installation
 
