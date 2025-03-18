@@ -1,9 +1,12 @@
-# Pinata IPFS CLI (Deprecated)
+# Pinata IPFS CLI
+
+![cover](https://dweb.mypinata.cloud/ipfs/QmNcdx9t48z7RQUXUZZHmuc4zBfyBxKLjDfEgmfhiop7j7?img-format=webp)
+The official CLI for the Files API written in Go
 
 ## Installation
 
-> [!WARNING]
-> This CLI has been deprecated for a new version that supports both Public and Private IPFS: [https://github.com/PinataCloud/ipfs-cli](https://github.com/PinataCloud/ipfs-cli)
+> [!NOTE]
+> If you are on Windows please use WSL when installing. If you get an error that it was not able to resolve the github host run `git config --global --unset http.proxy`
 
 ### Install Script
 
