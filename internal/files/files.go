@@ -197,7 +197,7 @@ func ListFiles(amount string, pageToken string, cidPending bool, name string, ci
 
 	if len(keyvalues) > 0 {
 		for key, value := range keyvalues {
-			params = append(params, fmt.Sprintf("metadata[%s]=%s", key, value))
+			params = append(params, fmt.Sprintf("keyvalues[%s]=%s", key, value))
 		}
 	}
 
