@@ -12,7 +12,7 @@ type UploadResponse struct {
 		GroupId       *string           `json:"group_id"`
 		KeyValues     map[string]string `json:"keyvalues"`
 		Vectorized    bool              `json:"vectorized"`
-		Network       string            `json:"network"`
+		Network       string            `json:"network,omitempty"`
 		IsDuplicate   bool              `json:"is_duplicate,omitempty"`
 	} `json:"data"`
 }

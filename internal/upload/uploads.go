@@ -279,7 +279,7 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	urlParts := strings.Split(uploadURL, "/")
 	fileId := urlParts[len(urlParts)-2]
 
-	apiURL := fmt.Sprintf("https://%s/v3/files/%s", cliConfig.GetAPIHost(), fileId)
+	apiURL := fmt.Sprintf("https://%s/v3/files/%s/%s", cliConfig.GetAPIHost(), networkParam, fileId)
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		return types.UploadResponse{}, fmt.Errorf("failed to create response request: %w", err)
@@ -396,7 +396,7 @@ func folderUpload(filePath string, groupId string, name string, verbose bool) (t
 			GroupId       *string           `json:"group_id"`
 			KeyValues     map[string]string `json:"keyvalues"`
 			Vectorized    bool              `json:"vectorized"`
-			Network       string            `json:"network"`
+			Network       string            `json:"network,omitempty"`
 			IsDuplicate   bool              `json:"is_duplicate,omitempty"`
 		}{
 			Id:            pinningResponse.ID,
