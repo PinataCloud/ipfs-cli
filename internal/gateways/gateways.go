@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"pinata/internal/common"
 	"pinata/internal/config"
 	"pinata/internal/types"
 	"pinata/internal/utils"
+	"runtime"
 	"strings"
 	"time"
-
-	"github.com/skratchdot/open-golang/open"
 )
 
 func FindGatewayDomain() ([]byte, error) {
@@ -174,38 +174,46 @@ func GetAccessLink(cid string, expires int, network string) (types.GetSignedURLR
 	return response, nil
 }
 
-func Convert(cid string) (string, error) {
-	domain, err := FindGatewayDomain()
-	if err != nil {
-		return "", err
-	}
-
-	url := fmt.Sprintf("https://%s/ipfs/%s", domain, cid)
-	fmt.Println(url)
-
-	return url, nil
-}
-
 func OpenCID(cid string, network string) error {
-	if network == "public" {
-		url, err := Convert(cid)
-		if err != nil {
-			return fmt.Errorf("problem creating URL: %w", err)
-		}
-		err = open.Run(url)
-		if err != nil {
-			return fmt.Errorf("problem opening URL: %w", err)
-		}
-		return nil
-	} else {
-		data, err := GetAccessLink(cid, 30, network)
-		if err != nil {
-			return fmt.Errorf("problem creating URL: %w", err)
-		}
-		err = open.Run(data.Data)
-		if err != nil {
-			return fmt.Errorf("problem opening URL: %w", err)
-		}
-		return nil
+	networkParam, err := config.GetNetworkParam(network)
+	if err != nil {
+		return fmt.Errorf("problem getting network parameter: %w", err)
 	}
+
+	var url string
+	if networkParam == "public" {
+		domain, err := FindGatewayDomain()
+		if err != nil {
+			return fmt.Errorf("problem finding gateway domain: %w", err)
+		}
+		url = fmt.Sprintf("https://%s/ipfs/%s", string(domain), cid)
+	} else {
+		resp, err := GetAccessLink(cid, 30, networkParam)
+		if err != nil {
+			return fmt.Errorf("problem creating URL: %w", err)
+		}
+
+		url = resp.Data
+		url = strings.ReplaceAll(url, "\\u0026", "&")
+		url = strings.Trim(url, "\"")
+	}
+
+	fmt.Printf("Opening URL: %s\n", url)
+
+	switch runtime.GOOS {
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+
+	if err != nil {
+		return fmt.Errorf("problem opening URL: %w", err)
+	}
+
+	return nil
 }
