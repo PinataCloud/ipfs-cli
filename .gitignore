@@ -8,3 +8,4 @@ gon.hcl
 Makefile
 main
 test
+.env
