@@ -25,7 +25,7 @@ import (
 
 const (
 	MAX_SIZE_REGULAR_UPLOAD = 100 * 1024 * 1024 // Uploead threshold
-	CHUNK_SIZE              = 10 * 1024 * 1024  // Chunk size
+	CHUNK_SIZE              = 50 * 1024 * 1024 + 1  // Chunk size
 )
 
 func Upload(filePath string, groupId string, name string, verbose bool, network string) (types.UploadResponse, error) {
