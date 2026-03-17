@@ -471,7 +471,7 @@ OPTIONS:
 
 ### `agents`
 
-Interact with AI agents on Pinata. Agents are persistent AI assistants that can run tools, maintain context across conversations, and integrate with external services.
+Interact with AI agents on Pinata. Agents are hosted OpenClaw instances that can run tools, maintain context across conversations, and integrate with external services.
 
 ```
 NAME:
