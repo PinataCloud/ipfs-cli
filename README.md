@@ -469,6 +469,213 @@ OPTIONS:
    --help, -h                    show help
 ```
 
+### `agents`
+
+Interact with AI agents on Pinata. Agents are persistent AI assistants that can run tools, maintain context across conversations, and integrate with external services.
+
+```
+NAME:
+   pinata agents - Interact with AI agents on Pinata
+
+USAGE:
+   pinata agents command [command options] [arguments...]
+
+COMMANDS:
+   list, l          List all agents
+   create, c        Create a new agent
+   get, g           Get agent details
+   delete, d        Delete an agent
+   restart, r       Restart an agent
+   logs             Get agent logs
+   chat             Interactive chat with an agent
+   exec             Execute a command in an agent container
+   skills, sk       Manage agent skills
+   secrets, sec     Manage secrets
+   channels, ch     Manage agent channels
+   devices, dev     Manage agent devices
+   snapshots, snap  Manage agent snapshots
+   tasks, t         Manage agent cron jobs/tasks
+   ports, p         Manage agent port forwarding
+   files            Agent file operations
+   feedback         Submit feedback or feature request
+   help, h          Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `list`
+
+```
+NAME:
+   pinata agents list - List all agents
+
+USAGE:
+   pinata agents list [command options] [arguments...]
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `create`
+
+```
+NAME:
+   pinata agents create - Create a new agent
+
+USAGE:
+   pinata agents create [command options] [arguments...]
+
+OPTIONS:
+   --name value         Name for the agent
+   --description value  Description of the agent
+   --help, -h           show help
+```
+
+#### `chat`
+
+Start an interactive chat session with an agent. Supports multiple output modes for different use cases.
+
+```
+NAME:
+   pinata agents chat - Interactive chat with an agent
+
+USAGE:
+   pinata agents chat [command options] [agent ID] [optional prompt]
+
+OPTIONS:
+   --model value       Model override
+   --json              Force JSONL output (auto-enabled when stdout is not a TTY)
+   --text              Force plain text output (simpler alternative to JSONL for pipes)
+   --conversation, -C  Multi-turn conversation mode (read messages from stdin line-by-line)
+   --session value     Session key for conversation context
+   --help, -h          show help
+```
+
+**Output Modes:**
+
+| Mode | When | Use Case |
+|------|------|----------|
+| Interactive TUI | TTY stdout | Human users in terminal |
+| JSONL streaming | Non-TTY stdout (default) | Machine parsing, other agents |
+| Plain text (`--text`) | Explicit flag | Simple scripts, easy piping |
+| Multi-turn (`-C`) | Explicit flag | Conversations with context |
+
+**Examples:**
+
+```bash
+# Interactive TUI mode
+pinata agents chat <agent-id>
+
+# Single message with plain text response
+echo "Hello" | pinata agents chat --text <agent-id>
+
+# Multi-turn conversation (each line is a message)
+echo -e "Hello\nWhat is 2+2?" | pinata agents chat --text -C <agent-id>
+
+# JSONL output for machine parsing
+echo "Hello" | pinata agents chat <agent-id>
+
+# Filter JSONL to extract just the text
+echo "Hello" | pinata agents chat <agent-id> | jq -r 'select(.type=="content_delta") | .delta.text' | tr -d '\n'
+```
+
+#### `skills`
+
+```
+NAME:
+   pinata agents skills - Manage agent skills
+
+USAGE:
+   pinata agents skills command [command options] [arguments...]
+
+COMMANDS:
+   list, l    List skills attached to an agent
+   attach, a  Attach a skill to an agent
+   detach, d  Detach a skill from an agent
+   help, h    Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `secrets`
+
+```
+NAME:
+   pinata agents secrets - Manage secrets
+
+USAGE:
+   pinata agents secrets command [command options] [arguments...]
+
+COMMANDS:
+   list, l    List secrets for an agent
+   set, s     Set a secret for an agent
+   delete, d  Delete a secret
+   help, h    Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `channels`
+
+```
+NAME:
+   pinata agents channels - Manage agent channels
+
+USAGE:
+   pinata agents channels command [command options] [arguments...]
+
+COMMANDS:
+   list, l      List channels for an agent
+   telegram, t  Manage Telegram channel
+   slack, s     Manage Slack channel
+   help, h      Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `snapshots`
+
+```
+NAME:
+   pinata agents snapshots - Manage agent snapshots
+
+USAGE:
+   pinata agents snapshots command [command options] [arguments...]
+
+COMMANDS:
+   list, l     List snapshots for an agent
+   create, c   Create a new snapshot
+   restore, r  Restore a snapshot
+   delete, d   Delete a snapshot
+   help, h     Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+#### `tasks`
+
+```
+NAME:
+   pinata agents tasks - Manage agent cron jobs/tasks
+
+USAGE:
+   pinata agents tasks command [command options] [arguments...]
+
+COMMANDS:
+   list, l    List tasks for an agent
+   create, c  Create a new task
+   delete, d  Delete a task
+   help, h    Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
 ## Contact
 
 If you have any questions please feel free to reach out to us!
