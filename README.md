@@ -496,7 +496,13 @@ COMMANDS:
    snapshots, snap  Manage agent snapshots
    tasks, t         Manage agent cron jobs/tasks
    ports, p         Manage agent port forwarding
+   domains, dom     Manage custom domains (beta)
    files            Agent file operations
+   templates, tpl   Browse pre-built agent templates
+   clawhub, hub     Browse and install skills from ClawHub
+   config, cfg      Manage agent configuration
+   update, up       Manage agent openclaw updates
+   versions, ver    List available agent versions
    feedback         Submit feedback or feature request
    help, h          Shows a list of commands or help for one command
 
@@ -529,7 +535,18 @@ USAGE:
 OPTIONS:
    --name value         Name for the agent
    --description value  Description of the agent
+   --template value     Template ID to create agent from
    --help, -h           show help
+```
+
+**Example with template:**
+
+```bash
+# List available templates
+pinata agents templates list
+
+# Create agent from template
+pinata agents create --name "My IPFS Agent" --template tpchchgg
 ```
 
 #### `chat`
@@ -628,13 +645,26 @@ USAGE:
    pinata agents channels command [command options] [arguments...]
 
 COMMANDS:
-   list, l      List channels for an agent
-   telegram, t  Manage Telegram channel
-   slack, s     Manage Slack channel
-   help, h      Shows a list of commands or help for one command
+   status, s     Get channel configuration status
+   configure, c  Configure a channel (telegram, slack, discord, whatsapp)
+   remove, r     Remove a channel configuration
+   help, h       Shows a list of commands or help for one command
 
 OPTIONS:
    --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# Get channel status
+pinata agents channels status <agent-id>
+
+# Configure Telegram
+pinata agents channels configure <agent-id> telegram --bot-token <token>
+
+# Remove a channel
+pinata agents channels remove <agent-id> telegram
 ```
 
 #### `snapshots`
@@ -647,14 +677,30 @@ USAGE:
    pinata agents snapshots command [command options] [arguments...]
 
 COMMANDS:
-   list, l     List snapshots for an agent
-   create, c   Create a new snapshot
-   restore, r  Restore a snapshot
-   delete, d   Delete a snapshot
-   help, h     Shows a list of commands or help for one command
+   list, l    List agent snapshots
+   create, c  Create a snapshot
+   status, s  Get sync status
+   reset, r   Reset to a snapshot
+   help, h    Shows a list of commands or help for one command
 
 OPTIONS:
    --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# List snapshots
+pinata agents snapshots list <agent-id>
+
+# Check sync status
+pinata agents snapshots status <agent-id>
+
+# Create a snapshot
+pinata agents snapshots create <agent-id>
+
+# Reset to a snapshot
+pinata agents snapshots reset <agent-id> <snapshot-cid>
 ```
 
 #### `tasks`
@@ -667,13 +713,265 @@ USAGE:
    pinata agents tasks command [command options] [arguments...]
 
 COMMANDS:
-   list, l    List tasks for an agent
+   list, l    List tasks
    create, c  Create a new task
+   update, u  Update an existing task
    delete, d  Delete a task
+   toggle     Enable or disable a task
+   run        Run a task immediately
+   history    View task run history
    help, h    Shows a list of commands or help for one command
 
 OPTIONS:
    --help, -h  show help
+```
+
+**Creating tasks:**
+
+```bash
+# Create hourly task with system event
+pinata agents tasks create --name "hourly-check" --every 1h --system-event "Check status" <agent-id>
+
+# Create daily task with cron expression
+pinata agents tasks create --name "daily-report" --cron "0 9 * * *" --agent-turn "Generate report" <agent-id>
+
+# Create one-time task
+pinata agents tasks create --name "scheduled-job" --at "2026-04-01T12:00:00Z" --system-event "Run once" <agent-id>
+```
+
+**Schedule types:**
+- `--every` - Interval (e.g., "1h", "30m", "24h")
+- `--cron` - Cron expression (e.g., "0 9 * * *")
+- `--at` - One-time at ISO 8601 timestamp
+
+**Payload types:**
+- `--system-event` - Triggers heartbeat-style execution
+- `--agent-turn` - Triggers conversational response
+
+#### `templates`
+
+Browse pre-built agent templates that provide ready-to-use configurations.
+
+```
+NAME:
+   pinata agents templates - Browse pre-built agent templates
+
+USAGE:
+   pinata agents templates command [command options] [arguments...]
+
+COMMANDS:
+   list, l  List available templates
+   get, g   Get template details
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# List all templates
+pinata agents templates list
+
+# List featured templates only
+pinata agents templates list --featured
+
+# Get template details
+pinata agents templates get ipfs-expert
+```
+
+#### `clawhub`
+
+Browse and install skills from ClawHub, the community skills marketplace.
+
+```
+NAME:
+   pinata agents clawhub - Browse and install skills from ClawHub
+
+USAGE:
+   pinata agents clawhub command [command options] [arguments...]
+
+COMMANDS:
+   list, l     List ClawHub skills
+   get, g      Get skill details
+   install, i  Install a ClawHub skill to your library
+   help, h     Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# Browse available skills
+pinata agents clawhub list
+
+# Get skill details
+pinata agents clawhub get clawdhub
+
+# Install a skill to your library
+pinata agents clawhub install <hub-skill-id>
+```
+
+#### `domains`
+
+Manage custom domains for your agents (beta feature).
+
+```
+NAME:
+   pinata agents domains - Manage custom domains (beta)
+
+USAGE:
+   pinata agents domains command [command options] [arguments...]
+
+COMMANDS:
+   list, l    List custom domains
+   add, a     Register a custom domain
+   update, u  Update a custom domain
+   delete, d  Remove a custom domain
+   help, h    Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# List domains for an agent
+pinata agents domains list <agent-id>
+
+# Add a subdomain (myapp.apps.pinata.cloud)
+pinata agents domains add <agent-id> --subdomain myapp --port 8080
+
+# Add a custom domain
+pinata agents domains add <agent-id> --domain api.example.com --port 3000 --protected
+
+# Update domain
+pinata agents domains update <agent-id> <domain-id> --port 8081
+
+# Remove domain
+pinata agents domains delete <agent-id> <domain-id>
+```
+
+#### `ports`
+
+Manage agent port forwarding rules.
+
+```
+NAME:
+   pinata agents ports - Manage agent port forwarding
+
+USAGE:
+   pinata agents ports command [command options] [arguments...]
+
+COMMANDS:
+   list, l  List port forwarding rules
+   set, s   Set port forwarding rules
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# List current port mappings
+pinata agents ports list <agent-id>
+
+# Set port forwarding (port:pathPrefix format)
+pinata agents ports set <agent-id> 8080:/api 3000:/app
+```
+
+#### `config`
+
+Manage agent openclaw configuration.
+
+```
+NAME:
+   pinata agents config - Manage agent configuration
+
+USAGE:
+   pinata agents config command [command options] [arguments...]
+
+COMMANDS:
+   get, g       Read openclaw config
+   set, s       Write openclaw config
+   validate, v  Validate openclaw config
+   help, h      Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# Read current config
+pinata agents config get <agent-id>
+
+# Validate config
+pinata agents config validate <agent-id>
+
+# Set config (JSON string)
+pinata agents config set <agent-id> '{"key": "value"}'
+```
+
+#### `update`
+
+Manage openclaw version updates.
+
+```
+NAME:
+   pinata agents update - Manage agent openclaw updates
+
+USAGE:
+   pinata agents update command [command options] [arguments...]
+
+COMMANDS:
+   check, c  Check for openclaw updates
+   apply, a  Apply openclaw update
+   help, h   Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# Check for updates
+pinata agents update check <agent-id>
+
+# Apply latest update
+pinata agents update apply <agent-id>
+
+# Apply specific version
+pinata agents update apply <agent-id> --tag 2026.3.8
+```
+
+#### `versions`
+
+List available agent image versions.
+
+```
+NAME:
+   pinata agents versions - List available agent versions
+
+USAGE:
+   pinata agents versions [agent ID]
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Example:**
+
+```bash
+pinata agents versions <agent-id>
 ```
 
 ## Contact

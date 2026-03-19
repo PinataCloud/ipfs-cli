@@ -27,7 +27,7 @@ func ListAgents() ([]Agent, error) {
 }
 
 // CreateAgent creates a new agent with the specified parameters.
-func CreateAgent(name, description, vibe, emoji string, skillCids, secretIds []string) (*CreateAgentResponse, error) {
+func CreateAgent(name, description, vibe, emoji, templateID string, skillCids, secretIds []string) (*CreateAgentResponse, error) {
 	body := CreateAgentBody{
 		Name:        name,
 		Description: description,
@@ -35,6 +35,7 @@ func CreateAgent(name, description, vibe, emoji string, skillCids, secretIds []s
 		Emoji:       emoji,
 		SkillCids:   skillCids,
 		SecretIds:   secretIds,
+		TemplateID:  templateID,
 	}
 
 	var response CreateAgentResponse

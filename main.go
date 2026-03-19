@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"pinata/internal/agents"
 	"pinata/internal/agents/chat"
@@ -738,6 +740,11 @@ func main() {
 							Name:  "secret",
 							Usage: "Secret IDs to attach (can be specified multiple times)",
 						},
+						&cli.StringFlag{
+							Name:    "template",
+							Aliases: []string{"t"},
+							Usage:   "Template ID to deploy from (uses template snapshot, skills, and defaults)",
+						},
 					},
 					Action: func(ctx *cli.Context) error {
 						name := ctx.String("name")
@@ -746,7 +753,8 @@ func main() {
 						emoji := ctx.String("emoji")
 						skills := ctx.StringSlice("skill")
 						secrets := ctx.StringSlice("secret")
-						_, err := agents.CreateAgent(name, description, vibe, emoji, skills, secrets)
+						template := ctx.String("template")
+						_, err := agents.CreateAgent(name, description, vibe, emoji, template, skills, secrets)
 						return err
 					},
 				},
@@ -1357,6 +1365,318 @@ Examples:
 							},
 						},
 						{
+							Name:      "create",
+							Aliases:   []string{"c"},
+							Usage:     "Create a new task",
+							ArgsUsage: "[agent ID]",
+							Description: `Create a new cron job for an agent.
+
+Schedule types:
+  --at       Run once at a specific time (ISO 8601 format)
+  --every    Run at intervals (e.g., "1h", "30m", "24h")
+  --cron     Run on a cron schedule (e.g., "0 9 * * *")
+
+Payload types (choose one):
+  --system-event  System event text (triggers heartbeat-style execution)
+  --agent-turn    Agent turn message (triggers conversational response)
+
+Examples:
+  # Run every hour with a system event
+  pinata agents tasks create <agent-id> --name "hourly-check" --every 1h --system-event "Check for updates"
+
+  # Run daily at 9am UTC with agent turn
+  pinata agents tasks create <agent-id> --name "daily-report" --cron "0 9 * * *" --agent-turn "Generate daily report"
+
+  # Run once at a specific time
+  pinata agents tasks create <agent-id> --name "one-time" --at "2026-04-01T12:00:00Z" --system-event "Do task"`,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:     "name",
+									Aliases:  []string{"n"},
+									Usage:    "Task name (required)",
+									Required: true,
+								},
+								&cli.StringFlag{
+									Name:  "description",
+									Usage: "Task description",
+								},
+								&cli.BoolFlag{
+									Name:  "disabled",
+									Usage: "Create task in disabled state",
+								},
+								&cli.StringFlag{
+									Name:  "at",
+									Usage: "Run once at this time (ISO 8601)",
+								},
+								&cli.StringFlag{
+									Name:  "every",
+									Usage: "Run every interval (e.g., 1h, 30m)",
+								},
+								&cli.StringFlag{
+									Name:  "cron",
+									Usage: "Cron expression (e.g., '0 9 * * *')",
+								},
+								&cli.StringFlag{
+									Name:  "tz",
+									Usage: "Timezone for cron schedule",
+								},
+								&cli.StringFlag{
+									Name:  "system-event",
+									Usage: "System event payload text",
+								},
+								&cli.StringFlag{
+									Name:  "agent-turn",
+									Usage: "Agent turn message",
+								},
+								&cli.StringFlag{
+									Name:  "model",
+									Usage: "Model override for agent turn",
+								},
+								&cli.IntFlag{
+									Name:  "timeout",
+									Usage: "Timeout in seconds",
+								},
+								&cli.StringFlag{
+									Name:  "session",
+									Usage: "Session target: main or isolated",
+									Value: "main",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+
+								// Parse schedule
+								var schedule agents.TaskSchedule
+								atTime := ctx.String("at")
+								every := ctx.String("every")
+								cronExpr := ctx.String("cron")
+
+								scheduleCount := 0
+								if atTime != "" {
+									scheduleCount++
+								}
+								if every != "" {
+									scheduleCount++
+								}
+								if cronExpr != "" {
+									scheduleCount++
+								}
+
+								if scheduleCount == 0 {
+									return errors.New("specify one of --at, --every, or --cron")
+								}
+								if scheduleCount > 1 {
+									return errors.New("specify only one of --at, --every, or --cron")
+								}
+
+								if atTime != "" {
+									schedule.Kind = agents.ScheduleKindAt
+									schedule.At = atTime
+								} else if every != "" {
+									schedule.Kind = agents.ScheduleKindEvery
+									// Parse duration string to milliseconds
+									dur, err := time.ParseDuration(every)
+									if err != nil {
+										return fmt.Errorf("invalid duration: %w", err)
+									}
+									schedule.EveryMs = int(dur.Milliseconds())
+								} else if cronExpr != "" {
+									schedule.Kind = agents.ScheduleKindCron
+									schedule.Expr = cronExpr
+								}
+
+								if tz := ctx.String("tz"); tz != "" {
+									schedule.Tz = tz
+								}
+
+								// Parse payload
+								var payload agents.TaskPayload
+								systemEvent := ctx.String("system-event")
+								agentTurn := ctx.String("agent-turn")
+
+								if systemEvent == "" && agentTurn == "" {
+									return errors.New("specify either --system-event or --agent-turn")
+								}
+								if systemEvent != "" && agentTurn != "" {
+									return errors.New("specify only one of --system-event or --agent-turn")
+								}
+
+								if systemEvent != "" {
+									payload.Kind = agents.PayloadKindSystemEvent
+									payload.Text = systemEvent
+								} else {
+									payload.Kind = agents.PayloadKindAgentTurn
+									payload.Message = agentTurn
+								}
+
+								if model := ctx.String("model"); model != "" {
+									payload.Model = model
+								}
+								if timeout := ctx.Int("timeout"); timeout > 0 {
+									payload.TimeoutSeconds = timeout
+								}
+
+								body := agents.CreateTaskBody{
+									Name:        ctx.String("name"),
+									Description: ctx.String("description"),
+									Enabled:     !ctx.Bool("disabled"),
+									Schedule:    schedule,
+									Payload:     payload,
+								}
+
+								if session := ctx.String("session"); session != "" {
+									if session == "main" {
+										body.SessionTarget = agents.SessionTargetMain
+									} else if session == "isolated" {
+										body.SessionTarget = agents.SessionTargetIsolated
+									}
+								}
+
+								_, err := agents.CreateTask(agentID, body)
+								return err
+							},
+						},
+						{
+							Name:      "update",
+							Aliases:   []string{"u"},
+							Usage:     "Update an existing task",
+							ArgsUsage: "[agent ID] [job ID]",
+							Description: `Update an existing cron job. Only specified fields are changed.
+
+Examples:
+  # Change task name
+  pinata agents tasks update <agent-id> <job-id> --name "new-name"
+
+  # Update schedule to run every 2 hours
+  pinata agents tasks update <agent-id> <job-id> --every 2h
+
+  # Update payload message
+  pinata agents tasks update <agent-id> <job-id> --system-event "New message"`,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:    "name",
+									Aliases: []string{"n"},
+									Usage:   "New task name",
+								},
+								&cli.StringFlag{
+									Name:  "description",
+									Usage: "New task description",
+								},
+								&cli.StringFlag{
+									Name:  "at",
+									Usage: "Run once at this time (ISO 8601)",
+								},
+								&cli.StringFlag{
+									Name:  "every",
+									Usage: "Run every interval (e.g., 1h, 30m)",
+								},
+								&cli.StringFlag{
+									Name:  "cron",
+									Usage: "Cron expression (e.g., '0 9 * * *')",
+								},
+								&cli.StringFlag{
+									Name:  "tz",
+									Usage: "Timezone for cron schedule",
+								},
+								&cli.StringFlag{
+									Name:  "system-event",
+									Usage: "System event payload text",
+								},
+								&cli.StringFlag{
+									Name:  "agent-turn",
+									Usage: "Agent turn message",
+								},
+								&cli.StringFlag{
+									Name:  "model",
+									Usage: "Model override for agent turn",
+								},
+								&cli.IntFlag{
+									Name:  "timeout",
+									Usage: "Timeout in seconds",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								jobID := ctx.Args().Get(1)
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								if jobID == "" {
+									return errors.New("no job ID provided")
+								}
+
+								body := agents.UpdateTaskBody{}
+
+								if name := ctx.String("name"); name != "" {
+									body.Name = name
+								}
+								if desc := ctx.String("description"); desc != "" {
+									body.Description = desc
+								}
+
+								// Parse schedule if any schedule flag is set
+								atTime := ctx.String("at")
+								every := ctx.String("every")
+								cronExpr := ctx.String("cron")
+
+								if atTime != "" || every != "" || cronExpr != "" {
+									schedule := &agents.TaskSchedule{}
+
+									if atTime != "" {
+										schedule.Kind = agents.ScheduleKindAt
+										schedule.At = atTime
+									} else if every != "" {
+										schedule.Kind = agents.ScheduleKindEvery
+										dur, err := time.ParseDuration(every)
+										if err != nil {
+											return fmt.Errorf("invalid duration: %w", err)
+										}
+										schedule.EveryMs = int(dur.Milliseconds())
+									} else if cronExpr != "" {
+										schedule.Kind = agents.ScheduleKindCron
+										schedule.Expr = cronExpr
+									}
+
+									if tz := ctx.String("tz"); tz != "" {
+										schedule.Tz = tz
+									}
+
+									body.Schedule = schedule
+								}
+
+								// Parse payload if any payload flag is set
+								systemEvent := ctx.String("system-event")
+								agentTurn := ctx.String("agent-turn")
+
+								if systemEvent != "" || agentTurn != "" {
+									payload := &agents.TaskPayload{}
+
+									if systemEvent != "" {
+										payload.Kind = agents.PayloadKindSystemEvent
+										payload.Text = systemEvent
+									} else {
+										payload.Kind = agents.PayloadKindAgentTurn
+										payload.Message = agentTurn
+									}
+
+									if model := ctx.String("model"); model != "" {
+										payload.Model = model
+									}
+									if timeout := ctx.Int("timeout"); timeout > 0 {
+										payload.TimeoutSeconds = timeout
+									}
+
+									body.Payload = payload
+								}
+
+								_, err := agents.UpdateTask(agentID, jobID, body)
+								return err
+							},
+						},
+						{
 							Name:      "delete",
 							Aliases:   []string{"d"},
 							Usage:     "Delete a task",
@@ -1466,6 +1786,206 @@ Examples:
 								return err
 							},
 						},
+						{
+							Name:      "set",
+							Aliases:   []string{"s"},
+							Usage:     "Set port forwarding rules",
+							ArgsUsage: "[agent ID] [port:pathPrefix] [port:pathPrefix] ...",
+							Description: `Replace all port forwarding rules for this agent.
+
+Each mapping is specified as port:pathPrefix (e.g., 8080:/api).
+Up to 10 rules can be configured.
+
+Examples:
+  # Forward port 8080 to /api path
+  pinata agents ports set <agent-id> 8080:/api
+
+  # Forward multiple ports
+  pinata agents ports set <agent-id> 8080:/api 3000:/app
+
+  # Clear all port forwarding rules
+  pinata agents ports set <agent-id>`,
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								var mappings []agents.PortForwarding
+								for _, arg := range ctx.Args().Tail() {
+									parts := strings.SplitN(arg, ":", 2)
+									if len(parts) != 2 {
+										return fmt.Errorf("invalid port mapping: %s (expected port:pathPrefix)", arg)
+									}
+									port, err := strconv.Atoi(parts[0])
+									if err != nil {
+										return fmt.Errorf("invalid port number: %s", parts[0])
+									}
+									mappings = append(mappings, agents.PortForwarding{
+										Port:       port,
+										PathPrefix: parts[1],
+									})
+								}
+								_, err := agents.UpdatePorts(agentID, mappings)
+								return err
+							},
+						},
+					},
+				},
+				{
+					Name:    "domains",
+					Aliases: []string{"dom"},
+					Usage:   "Manage custom domains (beta)",
+					Subcommands: []*cli.Command{
+						{
+							Name:      "list",
+							Aliases:   []string{"l"},
+							Usage:     "List custom domains",
+							ArgsUsage: "[agent ID]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								_, err := agents.ListDomains(agentID)
+								return err
+							},
+						},
+						{
+							Name:      "add",
+							Aliases:   []string{"a"},
+							Usage:     "Register a custom domain",
+							ArgsUsage: "[agent ID]",
+							Description: `Register a subdomain or custom domain for this agent.
+
+Use --subdomain for a *.apps.pinata.cloud subdomain, or --domain for your own domain.
+Max 5 domains per agent. Port 18789 is reserved.
+
+Examples:
+  # Register a subdomain (myapp.apps.pinata.cloud)
+  pinata agents domains add <agent-id> --subdomain myapp --port 8080
+
+  # Register a custom domain
+  pinata agents domains add <agent-id> --domain api.example.com --port 3000
+
+  # Add authentication protection
+  pinata agents domains add <agent-id> --subdomain myapp --port 8080 --protected`,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "subdomain",
+									Usage: "Subdomain name (e.g., 'myapp' for myapp.apps.pinata.cloud)",
+								},
+								&cli.StringFlag{
+									Name:  "domain",
+									Usage: "Custom domain (e.g., 'api.example.com')",
+								},
+								&cli.IntFlag{
+									Name:     "port",
+									Usage:    "Target container port",
+									Required: true,
+								},
+								&cli.BoolFlag{
+									Name:  "protected",
+									Usage: "Require authentication",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								subdomain := ctx.String("subdomain")
+								customDomain := ctx.String("domain")
+								port := ctx.Int("port")
+								protected := ctx.Bool("protected")
+
+								if subdomain == "" && customDomain == "" {
+									return errors.New("specify either --subdomain or --domain")
+								}
+								if subdomain != "" && customDomain != "" {
+									return errors.New("specify only one of --subdomain or --domain")
+								}
+
+								_, err := agents.CreateDomain(agentID, subdomain, customDomain, port, protected)
+								return err
+							},
+						},
+						{
+							Name:      "update",
+							Aliases:   []string{"u"},
+							Usage:     "Update a custom domain",
+							ArgsUsage: "[agent ID] [domain ID]",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "subdomain",
+									Usage: "New subdomain name",
+								},
+								&cli.StringFlag{
+									Name:  "domain",
+									Usage: "New custom domain",
+								},
+								&cli.IntFlag{
+									Name:  "port",
+									Usage: "New target port",
+								},
+								&cli.BoolFlag{
+									Name:  "protected",
+									Usage: "Enable authentication",
+								},
+								&cli.BoolFlag{
+									Name:  "no-protected",
+									Usage: "Disable authentication",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								domainID := ctx.Args().Get(1)
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								if domainID == "" {
+									return errors.New("no domain ID provided")
+								}
+
+								subdomain := ctx.String("subdomain")
+								customDomain := ctx.String("domain")
+
+								var targetPort *int
+								if ctx.IsSet("port") {
+									p := ctx.Int("port")
+									targetPort = &p
+								}
+
+								var protected *bool
+								if ctx.IsSet("protected") {
+									p := true
+									protected = &p
+								} else if ctx.IsSet("no-protected") {
+									p := false
+									protected = &p
+								}
+
+								_, err := agents.UpdateDomain(agentID, domainID, subdomain, customDomain, targetPort, protected)
+								return err
+							},
+						},
+						{
+							Name:      "delete",
+							Aliases:   []string{"d"},
+							Usage:     "Remove a custom domain",
+							ArgsUsage: "[agent ID] [domain ID]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								domainID := ctx.Args().Get(1)
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								if domainID == "" {
+									return errors.New("no domain ID provided")
+								}
+								_, err := agents.DeleteDomain(agentID, domainID)
+								return err
+							},
+						},
 					},
 				},
 				{
@@ -1490,6 +2010,229 @@ Examples:
 								return err
 							},
 						},
+					},
+				},
+				{
+					Name:    "templates",
+					Aliases: []string{"tpl"},
+					Usage:   "Browse pre-built agent templates",
+					Subcommands: []*cli.Command{
+						{
+							Name:    "list",
+							Aliases: []string{"l"},
+							Usage:   "List available templates",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:    "category",
+									Aliases: []string{"c"},
+									Usage:   "Filter by category",
+								},
+								&cli.BoolFlag{
+									Name:  "featured",
+									Usage: "Show only featured templates",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								category := ctx.String("category")
+								featured := ctx.Bool("featured")
+								_, err := agents.ListTemplates(category, featured)
+								return err
+							},
+						},
+						{
+							Name:      "get",
+							Aliases:   []string{"g"},
+							Usage:     "Get template details by slug",
+							ArgsUsage: "[slug]",
+							Action: func(ctx *cli.Context) error {
+								slug := ctx.Args().First()
+								if slug == "" {
+									return errors.New("no template slug provided")
+								}
+								_, err := agents.GetTemplate(slug)
+								return err
+							},
+						},
+					},
+				},
+				{
+					Name:    "clawhub",
+					Aliases: []string{"hub"},
+					Usage:   "Browse and install skills from ClawHub",
+					Subcommands: []*cli.Command{
+						{
+							Name:    "list",
+							Aliases: []string{"l"},
+							Usage:   "Browse ClawHub skills",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:    "category",
+									Aliases: []string{"c"},
+									Usage:   "Filter by category",
+								},
+								&cli.StringFlag{
+									Name:    "sort",
+									Aliases: []string{"s"},
+									Usage:   "Sort by: popular, newest, name",
+								},
+								&cli.BoolFlag{
+									Name:  "featured",
+									Usage: "Show only featured skills",
+								},
+								&cli.StringFlag{
+									Name:  "cursor",
+									Usage: "Pagination cursor",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								category := ctx.String("category")
+								sort := ctx.String("sort")
+								featured := ctx.Bool("featured")
+								cursor := ctx.String("cursor")
+								_, err := agents.ListHubSkills(category, sort, featured, cursor)
+								return err
+							},
+						},
+						{
+							Name:      "get",
+							Aliases:   []string{"g"},
+							Usage:     "Get ClawHub skill details by slug",
+							ArgsUsage: "[slug]",
+							Action: func(ctx *cli.Context) error {
+								slug := ctx.Args().First()
+								if slug == "" {
+									return errors.New("no skill slug provided")
+								}
+								_, err := agents.GetHubSkill(slug)
+								return err
+							},
+						},
+						{
+							Name:      "install",
+							Aliases:   []string{"i"},
+							Usage:     "Install a ClawHub skill to your library",
+							ArgsUsage: "[hub-skill-id]",
+							Action: func(ctx *cli.Context) error {
+								hubSkillID := ctx.Args().First()
+								if hubSkillID == "" {
+									return errors.New("no hub skill ID provided")
+								}
+								_, err := agents.InstallHubSkill(hubSkillID)
+								return err
+							},
+						},
+					},
+				},
+				{
+					Name:    "config",
+					Aliases: []string{"cfg"},
+					Usage:   "Manage agent configuration",
+					Subcommands: []*cli.Command{
+						{
+							Name:      "get",
+							Aliases:   []string{"g"},
+							Usage:     "Get agent openclaw config",
+							ArgsUsage: "[agent ID]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								_, err := agents.GetConfig(agentID)
+								return err
+							},
+						},
+						{
+							Name:      "set",
+							Aliases:   []string{"s"},
+							Usage:     "Set agent openclaw config (JSON)",
+							ArgsUsage: "[agent ID] [json config]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								configJSON := ctx.Args().Get(1)
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								if configJSON == "" {
+									return errors.New("no config JSON provided")
+								}
+								var configData interface{}
+								if err := json.Unmarshal([]byte(configJSON), &configData); err != nil {
+									return fmt.Errorf("invalid JSON: %w", err)
+								}
+								return agents.SetConfig(agentID, configData)
+							},
+						},
+						{
+							Name:      "validate",
+							Aliases:   []string{"v"},
+							Usage:     "Validate agent openclaw config",
+							ArgsUsage: "[agent ID]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								_, err := agents.ValidateConfig(agentID)
+								return err
+							},
+						},
+					},
+				},
+				{
+					Name:    "update",
+					Aliases: []string{"up"},
+					Usage:   "Manage agent openclaw updates",
+					Subcommands: []*cli.Command{
+						{
+							Name:      "check",
+							Aliases:   []string{"c"},
+							Usage:     "Check for openclaw updates",
+							ArgsUsage: "[agent ID]",
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								_, err := agents.CheckUpdate(agentID)
+								return err
+							},
+						},
+						{
+							Name:      "apply",
+							Aliases:   []string{"a"},
+							Usage:     "Apply openclaw update",
+							ArgsUsage: "[agent ID]",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Specific version or tag to install (e.g., 'latest', '0.3.0', 'beta')",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								agentID := ctx.Args().First()
+								if agentID == "" {
+									return errors.New("no agent ID provided")
+								}
+								tag := ctx.String("tag")
+								_, err := agents.ApplyUpdate(agentID, tag)
+								return err
+							},
+						},
+					},
+				},
+				{
+					Name:      "versions",
+					Aliases:   []string{"ver"},
+					Usage:     "List available agent versions",
+					ArgsUsage: "[agent ID]",
+					Action: func(ctx *cli.Context) error {
+						agentID := ctx.Args().First()
+						if agentID == "" {
+							return errors.New("no agent ID provided")
+						}
+						_, err := agents.GetAvailableVersions(agentID)
+						return err
 					},
 				},
 				{

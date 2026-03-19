@@ -35,6 +35,7 @@ type CreateAgentBody struct {
 	Emoji       string   `json:"emoji,omitempty"`
 	SkillCids   []string `json:"skillCids,omitempty"`
 	SecretIds   []string `json:"secretIds,omitempty"`
+	TemplateID  string   `json:"templateId,omitempty"`
 }
 
 // CreateAgentResponse is the response from creating a new agent.
@@ -206,12 +207,12 @@ type AddSecretsResponse struct {
 
 // TelegramStatus represents the Telegram channel configuration status.
 type TelegramStatus struct {
-	Configured   bool     `json:"configured"`
-	Enabled      bool     `json:"enabled"`
-	DmPolicy     string   `json:"dmPolicy"`
-	AllowFrom    []string `json:"allowFrom"`
-	BotTokenSet  bool     `json:"botTokenSet"`
-	BotTokenHint *string  `json:"botTokenHint"`
+	Configured   bool        `json:"configured"`
+	Enabled      bool        `json:"enabled"`
+	DmPolicy     string      `json:"dmPolicy"`
+	AllowFrom    interface{} `json:"allowFrom"` // Can be array of strings or numbers
+	BotTokenSet  bool        `json:"botTokenSet"`
+	BotTokenHint *string     `json:"botTokenHint"`
 }
 
 // SlackStatus represents the Slack channel configuration status.
@@ -234,11 +235,11 @@ type DiscordStatus struct {
 
 // WhatsAppStatus represents the WhatsApp channel configuration status.
 type WhatsAppStatus struct {
-	Configured bool     `json:"configured"`
-	Enabled    bool     `json:"enabled"`
-	DmPolicy   string   `json:"dmPolicy"`
-	AllowFrom  []string `json:"allowFrom"`
-	Linked     bool     `json:"linked"`
+	Configured bool        `json:"configured"`
+	Enabled    bool        `json:"enabled"`
+	DmPolicy   string      `json:"dmPolicy"`
+	AllowFrom  interface{} `json:"allowFrom"` // Can be array of strings or numbers
+	Linked     bool        `json:"linked"`
 }
 
 // ChannelStatusResponse is the response from getting channel statuses.
@@ -529,5 +530,205 @@ type FeedbackResponse struct {
 
 // FeedbackBody is the request body for submitting feedback.
 type FeedbackBody struct {
+	Message string `json:"message"`
+}
+
+// --- Templates ---
+
+// TemplateRequiredSecret defines a secret required by a template.
+type TemplateRequiredSecret struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	GuideURL    string   `json:"guideUrl,omitempty"`
+	GuideSteps  []string `json:"guideSteps,omitempty"`
+	Required    bool     `json:"required"`
+}
+
+// Template represents a pre-built agent template.
+type Template struct {
+	TemplateID        string                   `json:"templateId"`
+	Name              string                   `json:"name"`
+	Slug              string                   `json:"slug"`
+	Description       string                   `json:"description"`
+	LongDescription   *string                  `json:"longDescription"`
+	PartnerName       string                   `json:"partnerName"`
+	PartnerLogoURL    *string                  `json:"partnerLogoUrl"`
+	PartnerURL        *string                  `json:"partnerUrl"`
+	Category          string                   `json:"category"`
+	Tags              []string                 `json:"tags"`
+	SnapshotCid       string                   `json:"snapshotCid"`
+	OpenclawVersion   string                   `json:"openclawVersion"`
+	RequiredSecrets   []TemplateRequiredSecret `json:"requiredSecrets"`
+	IncludedSkillCids []string                 `json:"includedSkillCids"`
+	DefaultVibe       *string                  `json:"defaultVibe"`
+	DefaultEmoji      *string                  `json:"defaultEmoji"`
+	Featured          bool                     `json:"featured"`
+	SortOrder         int                      `json:"sortOrder"`
+	Status            string                   `json:"status"`
+	Price             *string                  `json:"price"`
+	PriceAsset        string                   `json:"priceAsset"`
+	PriceNetwork      string                   `json:"priceNetwork"`
+	PayToAddress      *string                  `json:"payToAddress"`
+	IsFree            bool                     `json:"isFree"`
+}
+
+// TemplateListResponse is the response from listing templates.
+type TemplateListResponse struct {
+	Templates []Template `json:"templates"`
+}
+
+// TemplateDetailResponse is the response from getting a template.
+type TemplateDetailResponse struct {
+	Template Template `json:"template"`
+}
+
+// --- Config ---
+
+// ConfigResponse is the response from getting agent config.
+type ConfigResponse struct {
+	Config interface{} `json:"config"`
+}
+
+// UpdateConfigBody is the request body for updating agent config.
+type UpdateConfigBody struct {
+	Config interface{} `json:"config"`
+}
+
+// ValidateConfigResponse is the response from validating agent config.
+type ValidateConfigResponse struct {
+	Valid  bool   `json:"valid"`
+	Output string `json:"output"`
+}
+
+// --- Updates ---
+
+// UpdateCheckResponse is the response from checking for openclaw updates.
+type UpdateCheckResponse struct {
+	CurrentVersion  string `json:"currentVersion"`
+	LatestVersion   string `json:"latestVersion"`
+	UpdateAvailable bool   `json:"updateAvailable"`
+}
+
+// UpdateApplyBody is the request body for applying an openclaw update.
+type UpdateApplyBody struct {
+	Tag string `json:"tag,omitempty"`
+}
+
+// UpdateApplyResponse is the response from applying an openclaw update.
+type UpdateApplyResponse struct {
+	Success         bool   `json:"success"`
+	PreviousVersion string `json:"previousVersion"`
+	NewVersion      string `json:"newVersion"`
+	Output          string `json:"output"`
+}
+
+// --- Agent Versions ---
+
+// VersionsResponse is the response from getting available agent versions.
+type VersionsResponse struct {
+	CurrentVersion    string   `json:"currentVersion"`
+	AvailableVersions []string `json:"availableVersions"`
+}
+
+// --- ClawHub (Skills Marketplace) ---
+
+// HubEnvVarDef defines an environment variable for a hub skill.
+type HubEnvVarDef struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	GuideURL    string   `json:"guideUrl,omitempty"`
+	GuideSteps  []string `json:"guideSteps,omitempty"`
+	Required    bool     `json:"required,omitempty"`
+}
+
+// HubSkill represents a skill on ClawHub.
+type HubSkill struct {
+	HubSkillID      string         `json:"hubSkillId"`
+	SkillCid        string         `json:"skillCid"`
+	Name            string         `json:"name"`
+	Slug            string         `json:"slug"`
+	Description     string         `json:"description"`
+	LongDescription *string        `json:"longDescription"`
+	AuthorName      string         `json:"authorName"`
+	AuthorURL       *string        `json:"authorUrl"`
+	AuthorLogoURL   *string        `json:"authorLogoUrl"`
+	Category        string         `json:"category"`
+	Tags            []string       `json:"tags"`
+	EnvVars         []HubEnvVarDef `json:"envVars"`
+	ReadmeURL       *string        `json:"readmeUrl"`
+	Featured        bool           `json:"featured"`
+	InstallCount    int            `json:"installCount"`
+	CreatedAt       string         `json:"createdAt"`
+	UpdatedAt       string         `json:"updatedAt"`
+}
+
+// HubSkillListResponse is the response from listing hub skills.
+type HubSkillListResponse struct {
+	Skills     []HubSkill `json:"skills"`
+	NextCursor *string    `json:"nextCursor"`
+}
+
+// HubSkillDetailResponse is the response from getting a hub skill.
+type HubSkillDetailResponse struct {
+	Skill HubSkill `json:"skill"`
+}
+
+// InstallHubSkillResponse is the response from installing a hub skill.
+type InstallHubSkillResponse struct {
+	Success bool  `json:"success"`
+	Skill   Skill `json:"skill"`
+}
+
+// --- Custom Domains ---
+
+// CustomDomain represents a custom domain mapping for an agent.
+type CustomDomain struct {
+	ID           string  `json:"id"`
+	AgentID      string  `json:"agentId"`
+	UserID       string  `json:"userId"`
+	Subdomain    *string `json:"subdomain"`
+	CustomDomain *string `json:"customDomain"`
+	TargetPort   int     `json:"targetPort"`
+	Protected    bool    `json:"protected"`
+	CreatedAt    string  `json:"createdAt"`
+	UpdatedAt    string  `json:"updatedAt"`
+}
+
+// CustomDomainListResponse is the response from listing custom domains.
+type CustomDomainListResponse struct {
+	Domains []CustomDomain `json:"domains"`
+}
+
+// CreateCustomDomainBody is the request body for creating a custom domain.
+type CreateCustomDomainBody struct {
+	Subdomain    string `json:"subdomain,omitempty"`
+	CustomDomain string `json:"customDomain,omitempty"`
+	TargetPort   int    `json:"targetPort"`
+	Protected    bool   `json:"protected,omitempty"`
+}
+
+// CreateCustomDomainResponse is the response from creating a custom domain.
+type CreateCustomDomainResponse struct {
+	Success bool         `json:"success"`
+	Domain  CustomDomain `json:"domain"`
+}
+
+// UpdateCustomDomainBody is the request body for updating a custom domain.
+type UpdateCustomDomainBody struct {
+	Subdomain    string `json:"subdomain,omitempty"`
+	CustomDomain string `json:"customDomain,omitempty"`
+	TargetPort   *int   `json:"targetPort,omitempty"`
+	Protected    *bool  `json:"protected,omitempty"`
+}
+
+// UpdateCustomDomainResponse is the response from updating a custom domain.
+type UpdateCustomDomainResponse struct {
+	Success bool         `json:"success"`
+	Domain  CustomDomain `json:"domain"`
+}
+
+// DeleteCustomDomainResponse is the response from deleting a custom domain.
+type DeleteCustomDomainResponse struct {
+	Success bool   `json:"success"`
 	Message string `json:"message"`
 }

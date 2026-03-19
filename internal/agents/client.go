@@ -74,3 +74,36 @@ func doJSON(method, path string, body interface{}, result interface{}) error {
 
 	return nil
 }
+
+// doRequestURL makes an authenticated HTTP request to a full URL
+func doRequestURL(method, url string, body interface{}) (*http.Response, error) {
+	jwt, err := common.FindToken()
+	if err != nil {
+		return nil, err
+	}
+
+	var reqBody io.Reader
+	if body != nil {
+		jsonPayload, err := json.Marshal(body)
+		if err != nil {
+			return nil, errors.Join(err, errors.New("failed to marshal request body"))
+		}
+		reqBody = bytes.NewBuffer(jsonPayload)
+	}
+
+	req, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to create the request"))
+	}
+
+	req.Header.Set("Authorization", "Bearer "+string(jwt))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to send the request"))
+	}
+
+	return resp, nil
+}
