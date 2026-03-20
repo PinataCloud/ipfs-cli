@@ -1,7 +1,7 @@
 # Pinata IPFS CLI
 
 ![cover](https://dweb.mypinata.cloud/ipfs/QmNcdx9t48z7RQUXUZZHmuc4zBfyBxKLjDfEgmfhiop7j7?img-format=webp)
-The official CLI for the Pinata API written in Go
+The official CLI for the Pinata API written in Go. Includes support for the Pinata Agents platform (beta).
 
 ## Installation
 
@@ -47,14 +47,14 @@ For example, this is how I install the CLI for my Raspberry Pi
 ```
 wget https://github.com/PinataCloud/ipfs-cli/releases/download/v0.1.0/ipfs-cli_Linux_arm64.tar.gz
 
-tar -xzf files-cli_Linux_arm64.tar.gz
+tar -xzf ipfs-cli_Linux_arm64.tar.gz
 
 sudo mv pinata /usr/bin
 ```
 
 ## Usage
 
-The Pinata CLI is equipped with the majortiry of features on both the Public IPFS API and Private IPFS API.
+The Pinata CLI is equipped with the majority of features on both the Public IPFS API and Private IPFS API. It also includes support for AI Agents (beta).
 
 ### `auth`
 
@@ -66,7 +66,7 @@ pinata auth
 
 ### `config`
 
-Set a default IPFS network, can be either `public` or `private`. You can always change this at any time or override in individual commands.
+Set a default IPFS network, can be either `public` or `private`. You can always change this at any time or override in individual commands. If none is set the default is `public`.
 
 ```
 NAME:
@@ -469,7 +469,10 @@ OPTIONS:
    --help, -h                    show help
 ```
 
-### `agents`
+### `agents` (Beta)
+
+> [!WARNING]
+> The Agents platform is currently in beta. Features and APIs may change.
 
 Interact with AI agents on Pinata. Agents are hosted OpenClaw instances that can run tools, maintain context across conversations, and integrate with external services.
 
