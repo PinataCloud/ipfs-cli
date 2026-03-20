@@ -9,3 +9,10 @@ Makefile
 main
 test
 .env
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# API specs
+api-*.json
