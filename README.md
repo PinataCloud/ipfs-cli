@@ -533,10 +533,14 @@ USAGE:
    pinata agents create [command options] [arguments...]
 
 OPTIONS:
-   --name value         Name for the agent
-   --description value  Description of the agent
-   --template value     Template ID to create agent from
-   --help, -h           show help
+   --name value, -n value             Name of the agent (required)
+   --description value, -d value      Agent personality description
+   --vibe value                       Agent vibe/tagline
+   --emoji value                      Agent emoji
+   --skill value [ --skill value ]    Skill CIDs to attach (can be specified multiple times)
+   --secret value [ --secret value ]  Secret IDs to attach (can be specified multiple times)
+   --template value, -t value         Template ID to deploy from (uses template snapshot, skills, and defaults)
+   --help, -h                         show help
 ```
 
 **Example with template:**
@@ -597,6 +601,95 @@ echo "Hello" | pinata agents chat <agent-id>
 echo "Hello" | pinata agents chat <agent-id> | jq -r 'select(.type=="content_delta") | .delta.text' | tr -d '\n'
 ```
 
+#### `exec`
+
+Execute a command inside an agent's container.
+
+```
+NAME:
+   pinata agents exec - Execute a command in an agent container
+
+USAGE:
+   pinata agents exec [command options] [agent ID] [command]
+
+OPTIONS:
+   --cwd value  Working directory for the command
+   --help, -h   show help
+```
+
+**Examples:**
+
+```bash
+# Run a simple command
+pinata agents exec <agent-id> 'echo hello'
+
+# List files in workspace
+pinata agents exec <agent-id> 'ls -la /app'
+
+# Run with specific working directory
+pinata agents exec <agent-id> --cwd /app 'cat config.json'
+```
+
+#### `files`
+
+Read files from an agent's container.
+
+```
+NAME:
+   pinata agents files - Agent file operations
+
+USAGE:
+   pinata agents files command [command options] [arguments...]
+
+COMMANDS:
+   read, r  Read a file from agent container
+   help, h  Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# Read a file from the agent
+pinata agents files read <agent-id> /app/config.json
+```
+
+#### `devices`
+
+Manage device pairing for agents (used for mobile/external device connections).
+
+```
+NAME:
+   pinata agents devices - Manage agent devices
+
+USAGE:
+   pinata agents devices command [command options] [arguments...]
+
+COMMANDS:
+   list, l      List pending and paired devices
+   approve, a   Approve a device pairing request
+   approve-all  Approve all pending device requests
+   help, h      Shows a list of commands or help for one command
+
+OPTIONS:
+   --help, -h  show help
+```
+
+**Examples:**
+
+```bash
+# List devices for an agent
+pinata agents devices list <agent-id>
+
+# Approve a specific device request
+pinata agents devices approve <agent-id> <request-id>
+
+# Approve all pending requests
+pinata agents devices approve-all <agent-id>
+```
+
 #### `skills`
 
 ```
@@ -607,9 +700,11 @@ USAGE:
    pinata agents skills command [command options] [arguments...]
 
 COMMANDS:
-   list, l    List skills attached to an agent
-   attach, a  Attach a skill to an agent
-   detach, d  Detach a skill from an agent
+   list, l    List available skills in library
+   create, c  Create a new skill
+   delete, d  Delete a skill from library
+   attach, a  Attach skills to an agent
+   detach     Detach a skill from an agent
    help, h    Shows a list of commands or help for one command
 
 OPTIONS:
@@ -626,9 +721,12 @@ USAGE:
    pinata agents secrets command [command options] [arguments...]
 
 COMMANDS:
-   list, l    List secrets for an agent
-   set, s     Set a secret for an agent
+   list, l    List all secrets
+   create, c  Create a new secret
+   update, u  Update a secret value
    delete, d  Delete a secret
+   attach, a  Attach secrets to an agent
+   detach     Detach a secret from an agent
    help, h    Shows a list of commands or help for one command
 
 OPTIONS:
