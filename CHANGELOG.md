@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-03-20
+
+### 🚀 Features
+
+- Add comprehensive Agents API support (beta)
+- Add interactive chat TUI with streaming responses
+- Add agent management commands (create, list, get, delete, restart, logs, versions)
+- Add skills management (list, create, delete, attach, detach)
+- Add secrets management (list, create, update, delete, attach, detach)
+- Add channels management (status, configure, remove)
+- Add devices management (list, approve, approve-all)
+- Add snapshots management (list, create, status, reset)
+- Add tasks/cron management (list, create, update, delete, toggle, run, history)
+- Add ports forwarding management (list, set)
+- Add custom domains management (list, add, update, delete)
+- Add templates browsing (list, get)
+- Add ClawHub skills marketplace (list, get, install)
+- Add agent config management (get, set, validate)
+- Add agent update management (check, apply)
+- Add exec command for running commands in agent containers
+- Add files read command for reading files from agents
+- Add feedback command for submitting feature requests
+- Support multiple chat output modes (TUI, JSON, text, conversation)
+
+### 📚 Documentation
+
+- Update README with complete agents documentation
+- Add beta notices for Agents platform
+- Fix typos and inaccuracies in README
+
 ## [0.1.0] - 2025-03-19
 
 ### 🐛 Bug Fixes
