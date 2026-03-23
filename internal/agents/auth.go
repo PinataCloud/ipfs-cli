@@ -2,6 +2,7 @@ package agents
 
 import (
 	"fmt"
+	"net/http"
 	"pinata/internal/utils"
 )
 
@@ -16,6 +17,22 @@ func CredentialLogin(prompt, secretName string) error {
 	}
 
 	fmt.Printf("Creating secret '%s'...\n", secretName)
-	_, err = CreateSecret(secretName, key)
+	err = UpsertSecret(secretName, key)
 	return err
+}
+
+
+// upsertSecret creates or updates a secret by name
+func UpsertSecret(name, value string) error {
+	var list SecretListResponse
+	if err := doSecretsJSON(http.MethodGet, "", nil, &list); err != nil {
+		return fmt.Errorf("failed to list secrets: %w", err)
+	}
+	for _, s := range list.Secrets {
+		if s.Name == name {
+			return doSecretsJSON(http.MethodPut, "/"+s.ID, UpdateSecretBody{Value: value}, nil)
+		}
+	}
+	
+	return doSecretsJSON(http.MethodPost, "", CreateSecretBody{Name: name, Value: value}, nil)
 }

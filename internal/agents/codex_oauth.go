@@ -10,9 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"time"
 )
@@ -108,74 +106,10 @@ func exchangeCodexToken(code, verifier string) (*codexTokenResponse, error) {
 	return &tokens, nil
 }
 
-// --- Secret upsert helpers ---
-
-// findSecretIDByName returns the ID of a secret with the given name, or "" if not found.
-func findSecretIDByName(name string) (string, error) {
-	var list SecretListResponse
-	if err := doSecretsJSON(http.MethodGet, "", nil, &list); err != nil {
-		return "", fmt.Errorf("failed to list secrets: %w", err)
-	}
-	for _, s := range list.Secrets {
-		if s.Name == name {
-			return s.ID, nil
-		}
-	}
-	return "", nil
-}
-
-// upsertOAuthSecret creates or updates the named secret with the full OAuth bundle
-// serialized as a JSON string, e.g. {"access_token":"...","refresh_token":"...","expires_at":"..."}.
-func upsertOAuthSecret(name, accessToken, refreshToken, expiresAt string) error {
-	bundle := codexBundle{
-		Access:    accessToken,
-		Refresh:   refreshToken,
-		ExpiresAt: expiresAt,
-	}
-	bundleJSON, err := json.Marshal(bundle)
-	if err != nil {
-		return fmt.Errorf("failed to marshal OAuth bundle: %w", err)
-	}
-	value := string(bundleJSON)
-
-	existingID, err := findSecretIDByName(name)
-	if err != nil {
-		return err
-	}
-
-	if existingID != "" {
-		body := UpdateSecretBody{Value: value}
-		return doSecretsJSON(http.MethodPut, "/"+existingID, body, nil)
-	}
-
-	body := CreateSecretBody{Name: name, Value: value}
-	var resp CreateSecretResponse
-	return doSecretsJSON(http.MethodPost, "", body, &resp)
-}
-
-// --- Local bundle (cache only — source of truth is the agents API) ---
-
 type codexBundle struct {
 	Access    string `json:"access_token"`
 	Refresh   string `json:"refresh_token"`
 	ExpiresAt string `json:"expires_at"`
-}
-
-func localBundlePath() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(home, ".pinata-openai-oauth"), nil
-}
-
-func saveLocalBundle(b *codexBundle) {
-	path, err := localBundlePath()
-	if err != nil {
-		return
-	}
-	data, _ := json.Marshal(b)
-	_ = os.WriteFile(path, data, 0600)
 }
 
 // --- Public API ---
@@ -274,14 +208,18 @@ func CodexOAuthLogin() (*CreateSecretResponse, error) {
 
 	expiresAt := time.Now().Add(time.Duration(tokens.ExpiresIn) * time.Second).UTC().Format(time.RFC3339)
 
-	saveLocalBundle(&codexBundle{
+	bundleJSON, err := json.Marshal(codexBundle{
 		Access:    tokens.AccessToken,
 		Refresh:   tokens.RefreshToken,
 		ExpiresAt: expiresAt,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal OAuth bundle: %w", err)
+	}
+	value := string(bundleJSON)
 
 	fmt.Printf("Storing secret '%s'...\n", codexSecretName)
-	if err := upsertOAuthSecret(codexSecretName, tokens.AccessToken, tokens.RefreshToken, expiresAt); err != nil {
+	if err := UpsertSecret(codexSecretName, value); err != nil {
 		return nil, fmt.Errorf("failed to store secret: %w", err)
 	}
 
