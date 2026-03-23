@@ -12,10 +12,17 @@ import (
 	"time"
 )
 
-func SaveJWT() error {
-	jwt, err := utils.GetInput("Enter your Pinata JWT")
-	if err != nil {
-		return err
+func SaveJWT(useDefault bool, token string) error {
+	var jwt string
+	var err error
+
+	if token != "" {
+		jwt = token
+	} else {
+		jwt, err = utils.GetInput("Enter your Pinata JWT")
+		if err != nil {
+			return err
+		}
 	}
 
 	if jwt == "" {
@@ -54,7 +61,7 @@ func SaveJWT() error {
 	}
 
 	fmt.Println("Authentication Successful!")
-	err = gateways.SetGateway("")
+	err = gateways.SetGateway("", useDefault)
 	if err != nil {
 		return err
 	}

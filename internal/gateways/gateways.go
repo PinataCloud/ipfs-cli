@@ -35,7 +35,7 @@ func FindGatewayDomain() ([]byte, error) {
 	return Domain, err
 }
 
-func SetGateway(domain string) error {
+func SetGateway(domain string, useDefault bool) error {
 	if domain == "" {
 		jwt, err := common.FindToken()
 		if err != nil {
@@ -71,11 +71,21 @@ func SetGateway(domain string) error {
 		for i, item := range response.Data.Rows {
 			options[i] = item.Domain + ".mypinata.cloud"
 		}
-		domain, err := utils.MultiSelect(options)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return nil
+
+		if useDefault {
+			if len(options) == 0 {
+				return errors.New("no gateways available")
+			}
+			domain = options[0]
+			fmt.Printf("Using default gateway: %s\n", domain)
+		} else {
+			domain, err = utils.MultiSelect(options)
+			if err != nil {
+				fmt.Println("Error:", err)
+				return nil
+			}
 		}
+
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return err
