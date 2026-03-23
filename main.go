@@ -2236,6 +2236,43 @@ Examples:
 					},
 				},
 				{
+					Name:  "auth",
+					Usage: "Authenticate with a provider and store the credential as a secret",
+					Flags: []cli.Flag{
+						&cli.StringFlag{
+							Name:     "provider",
+							Aliases:  []string{"p"},
+							Usage:    "Provider to authenticate with (anthropic, openai, openrouter)",
+							Required: true,
+						},
+						&cli.StringFlag{
+							Name:     "type",
+							Aliases:  []string{"t"},
+							Usage:    "Authentication type (api_key, oauth, setup_token)",
+							Required: true,
+						},
+					},
+					Action: func(ctx *cli.Context) error {
+						provider := ctx.String("provider")
+						authType := ctx.String("type")
+						switch provider + "/" + authType {
+						case "anthropic/api_key":
+							return agents.CredentialLogin("Anthropic API key", "ANTHROPIC_API_KEY")
+						case "anthropic/setup_token":
+							return agents.CredentialLogin("Anthropic setup token (run 'claude setup-token' to generate one)", "ANTHROPIC_SETUP_TOKEN")
+						case "openai/api_key":
+							return agents.CredentialLogin("OpenAI API key", "OPENAI_API_KEY")
+						case "openai/oauth":
+							_, err := agents.CodexOAuthLogin()
+							return err
+						case "openrouter/api_key":
+							return agents.CredentialLogin("OpenRouter API key", "OPENROUTER_API_KEY")
+						default:
+							return fmt.Errorf("unsupported combination: --provider %s --type %s\navailable:\n  --provider anthropic --type api_key\n  --provider anthropic --type setup_token\n  --provider openai --type api_key\n  --provider openai --type oauth\n  --provider openrouter --type api_key", provider, authType)
+						}
+					},
+				},
+				{
 					Name:      "feedback",
 					Usage:     "Submit feedback or feature request",
 					ArgsUsage: "[message]",
