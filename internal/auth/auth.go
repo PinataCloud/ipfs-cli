@@ -13,7 +13,7 @@ import (
 )
 
 func SaveJWT() error {
-	jwt, err := utils.GetInput("Enter your Pinata JWT")
+	jwt, err := utils.GetInput("Enter your Pinata JWT", "Pinata JWT")
 	if err != nil {
 		return err
 	}

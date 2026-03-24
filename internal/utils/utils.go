@@ -29,13 +29,14 @@ var (
 type item string
 
 type inputModel struct {
+	label     string
 	textInput textinput.Model
 	err       error
 }
 
-func initialInputModel() inputModel {
+func initialInputModel(label, placeholder string) inputModel {
 	ti := textinput.New()
-	ti.Placeholder = "Pinata JWT"
+	ti.Placeholder = placeholder
 	ti.Focus()
 	ti.Width = 35
 	ti.EchoMode = textinput.EchoPassword
@@ -46,6 +47,7 @@ func initialInputModel() inputModel {
 	ti.TextStyle = itemStyle
 
 	return inputModel{
+		label:     label,
 		textInput: ti,
 		err:       nil,
 	}
@@ -79,14 +81,14 @@ func (m inputModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m inputModel) View() string {
 	return fmt.Sprintf(
 		"%s\n\n%s\n\n%s",
-		"Enter your Pinata JWT",
+		m.label,
 		m.textInput.View(),
 		"(press enter to submit)",
 	) + "\n"
 }
 
-func GetInput(placeholder string) (string, error) {
-	p := tea.NewProgram(initialInputModel())
+func GetInput(label, placeholder string) (string, error) {
+	p := tea.NewProgram(initialInputModel(label, placeholder))
 	m, err := p.Run()
 	if err != nil {
 		return "", err
