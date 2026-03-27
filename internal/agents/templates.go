@@ -83,3 +83,131 @@ func GetTemplate(slug string) (*TemplateDetailResponse, error) {
 
 	return &response, nil
 }
+
+// ListTemplatesBySubmitter retrieves templates submitted by the authenticated user.
+func ListTemplatesBySubmitter() (*TemplateListResponse, error) {
+	var response TemplateListResponse
+	err := doTemplatesJSON(http.MethodGet, "?submittedBy=me", nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response.Templates, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}
+
+// ValidateTemplate validates a git repo for template submission.
+func ValidateTemplate(gitURL, branch string) (*ValidateTemplateResponse, error) {
+	body := SubmitTemplateBody{GitURL: gitURL}
+	if branch != "" {
+		body.Branch = branch
+	}
+
+	var response ValidateTemplateResponse
+	err := doTemplatesJSON(http.MethodPost, "/validate", body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}
+
+// SubmitTemplate submits a new template from a git repo URL.
+func SubmitTemplate(gitURL, branch string) (*SubmitTemplateResponse, error) {
+	body := SubmitTemplateBody{GitURL: gitURL}
+	if branch != "" {
+		body.Branch = branch
+	}
+
+	var response SubmitTemplateResponse
+	err := doTemplatesJSON(http.MethodPost, "", body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}
+
+// UpdateTemplate updates an existing template submission by re-pulling from the repo.
+func UpdateTemplate(templateID, gitURL, branch string) (*SubmitTemplateResponse, error) {
+	body := SubmitTemplateBody{}
+	if gitURL != "" {
+		body.GitURL = gitURL
+	}
+	if branch != "" {
+		body.Branch = branch
+	}
+
+	var response SubmitTemplateResponse
+	err := doTemplatesJSON(http.MethodPut, "/"+templateID, body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}
+
+// DeleteTemplate archives a template submission.
+func DeleteTemplate(templateID string) (*DeleteTemplateResponse, error) {
+	var response DeleteTemplateResponse
+	err := doTemplatesJSON(http.MethodDelete, "/"+templateID, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}
+
+// ListBranches lists branches for a public git repository.
+func ListBranches(gitURL string) (*BranchesResponse, error) {
+	body := BranchesBody{GitURL: gitURL}
+
+	var response BranchesResponse
+	err := doTemplatesJSON(http.MethodPost, "/branches", body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	formattedJSON, err := json.MarshalIndent(response, "", "    ")
+	if err != nil {
+		return nil, errors.New("failed to format JSON")
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return &response, nil
+}

@@ -570,16 +570,64 @@ type Template struct {
 	PriceNetwork      string                   `json:"priceNetwork"`
 	PayToAddress      *string                  `json:"payToAddress"`
 	IsFree            bool                     `json:"isFree"`
+	Version           int                      `json:"version,omitempty"`
+	CreatedAt         string                   `json:"createdAt,omitempty"`
+	UpdatedAt         string                   `json:"updatedAt,omitempty"`
+	SubmittedBy       *string                  `json:"submittedBy,omitempty"`
+	GitURL            *string                  `json:"gitUrl,omitempty"`
+	GitCommitSha      *string                  `json:"gitCommitSha,omitempty"`
+	ReadmeHTML        *string                  `json:"readmeHtml,omitempty"`
 }
 
 // TemplateListResponse is the response from listing templates.
 type TemplateListResponse struct {
-	Templates []Template `json:"templates"`
+	Templates  []Template `json:"templates"`
+	Categories []string   `json:"categories,omitempty"`
 }
 
 // TemplateDetailResponse is the response from getting a template.
 type TemplateDetailResponse struct {
 	Template Template `json:"template"`
+}
+
+// SubmitTemplateBody is the request body for validating, submitting, or updating a template.
+type SubmitTemplateBody struct {
+	GitURL string `json:"gitUrl,omitempty"`
+	Branch string `json:"branch,omitempty"`
+}
+
+// ValidateTemplateResponse is the response from validating a git repo for template submission.
+type ValidateTemplateResponse struct {
+	Valid     bool        `json:"valid"`
+	Errors    []string    `json:"errors"`
+	Manifest  interface{} `json:"manifest,omitempty"`
+	Readme    string      `json:"readme,omitempty"`
+	Files     []string    `json:"files,omitempty"`
+	CommitSha string      `json:"commitSha,omitempty"`
+}
+
+// SubmitTemplateResponse is the response from submitting or updating a template.
+type SubmitTemplateResponse struct {
+	Success          bool     `json:"success"`
+	Template         Template `json:"template,omitempty"`
+	Error            string   `json:"error,omitempty"`
+	ValidationErrors []string `json:"validationErrors,omitempty"`
+}
+
+// DeleteTemplateResponse is the response from deleting a template submission.
+type DeleteTemplateResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+}
+
+// BranchesBody is the request body for listing branches.
+type BranchesBody struct {
+	GitURL string `json:"gitUrl"`
+}
+
+// BranchesResponse is the response from listing branches.
+type BranchesResponse struct {
+	Branches []string `json:"branches"`
 }
 
 // --- Config ---
