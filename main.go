@@ -2015,7 +2015,7 @@ Examples:
 				{
 					Name:    "templates",
 					Aliases: []string{"tpl"},
-					Usage:   "Browse pre-built agent templates",
+					Usage:   "Browse and manage agent templates",
 					Subcommands: []*cli.Command{
 						{
 							Name:    "list",
@@ -2050,6 +2050,112 @@ Examples:
 									return errors.New("no template slug provided")
 								}
 								_, err := agents.GetTemplate(slug)
+								return err
+							},
+						},
+						{
+							Name:  "mine",
+							Usage: "List templates you have submitted",
+							Action: func(ctx *cli.Context) error {
+								_, err := agents.ListTemplatesBySubmitter()
+								return err
+							},
+						},
+						{
+							Name:      "validate",
+							Aliases:   []string{"v"},
+							Usage:     "Validate a git repo for template submission",
+							ArgsUsage: "[git URL]",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:    "branch",
+									Aliases: []string{"b"},
+									Usage:   "Branch to validate (default: main)",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								gitURL := ctx.Args().First()
+								if gitURL == "" {
+									return errors.New("no git URL provided")
+								}
+								branch := ctx.String("branch")
+								_, err := agents.ValidateTemplate(gitURL, branch)
+								return err
+							},
+						},
+						{
+							Name:      "submit",
+							Aliases:   []string{"s"},
+							Usage:     "Submit a new template from a git repo",
+							ArgsUsage: "[git URL]",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:    "branch",
+									Aliases: []string{"b"},
+									Usage:   "Branch to submit from (default: main)",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								gitURL := ctx.Args().First()
+								if gitURL == "" {
+									return errors.New("no git URL provided")
+								}
+								branch := ctx.String("branch")
+								_, err := agents.SubmitTemplate(gitURL, branch)
+								return err
+							},
+						},
+						{
+							Name:      "update",
+							Aliases:   []string{"u"},
+							Usage:     "Update an existing template submission (re-pull from repo)",
+							ArgsUsage: "[template ID]",
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "git-url",
+									Usage: "New git URL (optional, uses existing if omitted)",
+								},
+								&cli.StringFlag{
+									Name:    "branch",
+									Aliases: []string{"b"},
+									Usage:   "Branch to pull from (default: main)",
+								},
+							},
+							Action: func(ctx *cli.Context) error {
+								templateID := ctx.Args().First()
+								if templateID == "" {
+									return errors.New("no template ID provided")
+								}
+								gitURL := ctx.String("git-url")
+								branch := ctx.String("branch")
+								_, err := agents.UpdateTemplate(templateID, gitURL, branch)
+								return err
+							},
+						},
+						{
+							Name:      "delete",
+							Aliases:   []string{"d"},
+							Usage:     "Archive a template submission",
+							ArgsUsage: "[template ID]",
+							Action: func(ctx *cli.Context) error {
+								templateID := ctx.Args().First()
+								if templateID == "" {
+									return errors.New("no template ID provided")
+								}
+								_, err := agents.DeleteTemplate(templateID)
+								return err
+							},
+						},
+						{
+							Name:      "branches",
+							Usage:     "List branches for a git repository",
+							ArgsUsage: "[git URL]",
+							Action: func(ctx *cli.Context) error {
+								gitURL := ctx.Args().First()
+								if gitURL == "" {
+									return errors.New("no git URL provided")
+								}
+								_, err := agents.ListBranches(gitURL)
 								return err
 							},
 						},
