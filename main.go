@@ -2344,7 +2344,7 @@ Examples:
 				{
 					Name:      "auth",
 					Usage:     "Authenticate with a provider and store the credential as a secret",
-					ArgsUsage: "[provider: anthropic, openai, openrouter]",
+					ArgsUsage: "[provider: anthropic, openai, openrouter, venice]",
 					Flags: []cli.Flag{
 						&cli.BoolFlag{
 							Name:  "oauth",
@@ -2371,8 +2371,10 @@ Examples:
 							return agents.CredentialLogin("OpenAI API key", "OPENAI_API_KEY")
 						case "openrouter":
 							return agents.CredentialLogin("OpenRouter API key", "OPENROUTER_API_KEY")
+						case "venice":
+							return agents.CredentialLogin("Venice AI API key", "VENICE_API_KEY")
 						default:
-							return fmt.Errorf("unsupported provider: %q\navailable: anthropic, openai, openrouter", provider)
+							return fmt.Errorf("unsupported provider: %q\navailable: anthropic, openai, openrouter, venice", provider)
 						}
 					},
 				},
