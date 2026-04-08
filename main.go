@@ -2350,18 +2350,18 @@ Examples:
 							Name:  "oauth",
 							Usage: "Use OAuth browser flow instead of API key (openai only)",
 						},
-						&cli.BoolFlag{
-							Name:  "setup-token",
-							Usage: "Store an Anthropic setup token instead of an API key (anthropic only)",
-						},
+						// &cli.BoolFlag{
+						// 	Name:  "setup-token",
+						// 	Usage: "Store an Anthropic setup token instead of an API key (anthropic only)",
+						// },
 					},
 					Action: func(ctx *cli.Context) error {
 						provider := ctx.Args().First()
 						switch provider {
 						case "anthropic":
-							if ctx.Bool("setup-token") {
-								return agents.CredentialLogin("Anthropic setup token (run 'claude setup-token' to generate one)", "ANTHROPIC_SETUP_TOKEN")
-							}
+							// if ctx.Bool("setup-token") {
+							// 	return agents.CredentialLogin("Anthropic setup token (run 'claude setup-token' to generate one)", "ANTHROPIC_SETUP_TOKEN")
+							// }
 							return agents.CredentialLogin("Anthropic API key", "ANTHROPIC_API_KEY")
 						case "openai":
 							if ctx.Bool("oauth") {
