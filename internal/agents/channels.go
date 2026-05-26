@@ -27,16 +27,22 @@ func GetChannelStatus(agentID string) (*ChannelStatusResponse, error) {
 
 // ConfigureChannel configures a specific channel for an agent.
 // channel must be one of: telegram, slack, discord, whatsapp
-func ConfigureChannel(agentID, channel string, botToken, appToken, dmPolicy string, allowFrom []string) error {
+func ConfigureChannel(agentID, channel string, botToken, appToken, dmPolicy string, allowFrom []string, enabled *bool, skipRestart bool) error {
 	body := ConfigureChannelBody{
 		BotToken:  botToken,
 		AppToken:  appToken,
 		DmPolicy:  dmPolicy,
 		AllowFrom: allowFrom,
+		Enabled:   enabled,
+	}
+
+	path := "/" + agentID + "/channels/" + channel
+	if skipRestart {
+		path += "?skipRestart=true"
 	}
 
 	var response ConfigureChannelResponse
-	err := doJSON(http.MethodPost, "/"+agentID+"/channels/"+channel, body, &response)
+	err := doJSON(http.MethodPost, path, body, &response)
 	if err != nil {
 		return err
 	}

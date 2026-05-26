@@ -732,6 +732,10 @@ func main() {
 							Name:  "emoji",
 							Usage: "Agent emoji",
 						},
+						&cli.StringFlag{
+							Name:  "engine",
+							Usage: "Agent engine (openclaw, hermes, superbuilder)",
+						},
 						&cli.StringSliceFlag{
 							Name:  "skill",
 							Usage: "Skill CIDs to attach (can be specified multiple times)",
@@ -745,16 +749,27 @@ func main() {
 							Aliases: []string{"t"},
 							Usage:   "Template ID to deploy from (uses template snapshot, skills, and defaults)",
 						},
+						&cli.StringFlag{
+							Name:  "user-name",
+							Usage: "Name to attribute as the agent's owner",
+						},
+						&cli.StringFlag{
+							Name:  "user-email",
+							Usage: "Email to attribute as the agent's owner",
+						},
 					},
 					Action: func(ctx *cli.Context) error {
 						name := ctx.String("name")
 						description := ctx.String("description")
 						vibe := ctx.String("vibe")
 						emoji := ctx.String("emoji")
+						engine := ctx.String("engine")
 						skills := ctx.StringSlice("skill")
 						secrets := ctx.StringSlice("secret")
 						template := ctx.String("template")
-						_, err := agents.CreateAgent(name, description, vibe, emoji, template, skills, secrets)
+						userName := ctx.String("user-name")
+						userEmail := ctx.String("user-email")
+						_, err := agents.CreateAgent(name, description, vibe, emoji, engine, template, skills, secrets, userName, userEmail)
 						return err
 					},
 				},
@@ -975,6 +990,14 @@ Examples:
 									Name:  "file-id",
 									Usage: "Pinata v3 file ID",
 								},
+								&cli.StringFlag{
+									Name:  "source",
+									Usage: "Skill source (e.g. \"hub\" to skip IPFS validation)",
+								},
+								&cli.StringFlag{
+									Name:  "version",
+									Usage: "Version string for hub skills (e.g. 1.2.0)",
+								},
 							},
 							Action: func(ctx *cli.Context) error {
 								cid := ctx.String("cid")
@@ -982,7 +1005,9 @@ Examples:
 								description := ctx.String("description")
 								envVars := ctx.StringSlice("env")
 								fileId := ctx.String("file-id")
-								_, err := agents.CreateSkill(cid, name, description, envVars, fileId)
+								source := ctx.String("source")
+								version := ctx.String("version")
+								_, err := agents.CreateSkill(cid, name, description, envVars, fileId, source, version)
 								return err
 							},
 						},
@@ -1184,6 +1209,14 @@ Examples:
 									Name:  "allow-from",
 									Usage: "Allowed user IDs/phone numbers",
 								},
+								&cli.BoolFlag{
+									Name:  "enabled",
+									Usage: "Enable or disable the channel",
+								},
+								&cli.BoolFlag{
+									Name:  "skip-restart",
+									Usage: "Skip restarting the agent after configuring",
+								},
 							},
 							Action: func(ctx *cli.Context) error {
 								agentID := ctx.Args().First()
@@ -1198,7 +1231,13 @@ Examples:
 								appToken := ctx.String("app-token")
 								dmPolicy := ctx.String("dm-policy")
 								allowFrom := ctx.StringSlice("allow-from")
-								return agents.ConfigureChannel(agentID, channel, botToken, appToken, dmPolicy, allowFrom)
+								var enabled *bool
+								if ctx.IsSet("enabled") {
+									v := ctx.Bool("enabled")
+									enabled = &v
+								}
+								skipRestart := ctx.Bool("skip-restart")
+								return agents.ConfigureChannel(agentID, channel, botToken, appToken, dmPolicy, allowFrom, enabled, skipRestart)
 							},
 						},
 						{
@@ -1441,6 +1480,10 @@ Examples:
 									Usage: "Session target: main or isolated",
 									Value: "main",
 								},
+								&cli.StringSliceFlag{
+									Name:  "skills",
+									Usage: "Skill CIDs to make available to the task (can be specified multiple times)",
+								},
 							},
 							Action: func(ctx *cli.Context) error {
 								agentID := ctx.Args().First()
@@ -1525,6 +1568,7 @@ Examples:
 									Enabled:     !ctx.Bool("disabled"),
 									Schedule:    schedule,
 									Payload:     payload,
+									Skills:      ctx.StringSlice("skills"),
 								}
 
 								if session := ctx.String("session"); session != "" {
@@ -1597,6 +1641,10 @@ Examples:
 									Name:  "timeout",
 									Usage: "Timeout in seconds",
 								},
+								&cli.StringSliceFlag{
+									Name:  "skills",
+									Usage: "Skill CIDs to make available to the task (can be specified multiple times)",
+								},
 							},
 							Action: func(ctx *cli.Context) error {
 								agentID := ctx.Args().First()
@@ -1609,6 +1657,10 @@ Examples:
 								}
 
 								body := agents.UpdateTaskBody{}
+
+								if ctx.IsSet("skills") {
+									body.Skills = ctx.StringSlice("skills")
+								}
 
 								if name := ctx.String("name"); name != "" {
 									body.Name = name

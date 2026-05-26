@@ -92,13 +92,15 @@ func ListSkills() ([]Skill, error) {
 }
 
 // CreateSkill creates a new skill with the specified parameters.
-func CreateSkill(skillCid, name, description string, envVars []string, fileId string) (*CreateSkillResponse, error) {
+func CreateSkill(skillCid, name, description string, envVars []string, fileId, source, version string) (*CreateSkillResponse, error) {
 	body := CreateSkillBody{
 		SkillCid:    skillCid,
 		Name:        name,
 		Description: description,
 		EnvVars:     envVars,
 		FileID:      fileId,
+		Source:      source,
+		Version:     version,
 	}
 
 	var response CreateSkillResponse

@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - Add `templates refs` and `templates search-refs` to list/search branches and tags for a repo
 - Support submitting/updating templates from a subdirectory via `--path` (monorepos)
 - Support `--name`/`--slug` overrides when submitting templates
+- `agents create`: add `--engine`, `--user-name`, and `--user-email` flags
+- `agents skills create`: add `--source` and `--version` flags (for hub skills)
+- `agents channels configure`: add `--enabled` and `--skip-restart` flags
+- `agents tasks create`/`update`: add `--skills` flag to scope skills to a task
+- Surface engine info on agents and per-engine version data on `agents update check`
 
 ### 🐛 Bug Fixes
 
