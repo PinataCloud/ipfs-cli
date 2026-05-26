@@ -2463,7 +2463,7 @@ Examples:
 	},
 }
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(reorderArgs(app, os.Args)); err != nil {
 		log.Fatal(err)
 	}
 }

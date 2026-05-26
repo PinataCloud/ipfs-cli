@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - Fix `templates update` failing for templates submitted from a branch or subfolder: send the API's required `ref` (with `path` for monorepos) instead of the removed `branch` field
+- Allow flags to be passed after positional arguments (e.g. `templates update <id> --ref x`); previously such flags were silently dropped
+- Surface server error messages (including validation errors) for the templates API instead of a generic "server returned status N"
 
 ### 🚜 Refactor
 

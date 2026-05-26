@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"pinata/internal/config"
@@ -21,11 +22,8 @@ func doTemplatesJSON(method, path string, body interface{}, result interface{}) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var errResp ErrorResponse
-		if decodeErr := json.NewDecoder(resp.Body).Decode(&errResp); decodeErr == nil && errResp.Error != "" {
-			return fmt.Errorf("server error: %s", errResp.Error)
-		}
-		return fmt.Errorf("server returned status %d", resp.StatusCode)
+		raw, _ := io.ReadAll(resp.Body)
+		return apiErrorMessage(resp.StatusCode, raw)
 	}
 
 	if result != nil {

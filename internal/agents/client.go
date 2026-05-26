@@ -75,6 +75,37 @@ func doJSON(method, path string, body interface{}, result interface{}) error {
 	return nil
 }
 
+// apiErrorMessage extracts a human-readable error from an API error response
+// body. The API returns "error" either as a plain string or as an object
+// ({"name","message"} — e.g. ZodError), and may also place a message at the
+// top level. Falls back to the status code when nothing usable is found.
+func apiErrorMessage(status int, raw []byte) error {
+	var probe struct {
+		Error   json.RawMessage `json:"error"`
+		Message string          `json:"message"`
+	}
+	if err := json.Unmarshal(raw, &probe); err == nil {
+		var asString string
+		if len(probe.Error) > 0 && json.Unmarshal(probe.Error, &asString) == nil && asString != "" {
+			return fmt.Errorf("server error: %s", asString)
+		}
+		var asObject struct {
+			Name    string `json:"name"`
+			Message string `json:"message"`
+		}
+		if len(probe.Error) > 0 && json.Unmarshal(probe.Error, &asObject) == nil && asObject.Message != "" {
+			if asObject.Name != "" {
+				return fmt.Errorf("server error (%s): %s", asObject.Name, asObject.Message)
+			}
+			return fmt.Errorf("server error: %s", asObject.Message)
+		}
+		if probe.Message != "" {
+			return fmt.Errorf("server error: %s", probe.Message)
+		}
+	}
+	return fmt.Errorf("server returned status %d", status)
+}
+
 // doRequestURL makes an authenticated HTTP request to a full URL
 func doRequestURL(method, url string, body interface{}) (*http.Response, error) {
 	jwt, err := common.FindToken()
