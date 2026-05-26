@@ -2068,9 +2068,14 @@ Examples:
 							ArgsUsage: "[git URL]",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:    "branch",
-									Aliases: []string{"b"},
-									Usage:   "Branch to validate (default: main)",
+									Name:    "ref",
+									Aliases: []string{"r", "branch", "b"},
+									Usage:   "Git ref to validate (e.g. refs/heads/main, refs/tags/v1.0.0, or a bare branch name; default: main)",
+								},
+								&cli.StringFlag{
+									Name:    "path",
+									Aliases: []string{"p"},
+									Usage:   "Subdirectory within the repo to use as the template root (for monorepos)",
 								},
 							},
 							Action: func(ctx *cli.Context) error {
@@ -2078,8 +2083,9 @@ Examples:
 								if gitURL == "" {
 									return errors.New("no git URL provided")
 								}
-								branch := ctx.String("branch")
-								_, err := agents.ValidateTemplate(gitURL, branch)
+								ref := ctx.String("ref")
+								path := ctx.String("path")
+								_, err := agents.ValidateTemplate(gitURL, ref, path)
 								return err
 							},
 						},
@@ -2090,9 +2096,22 @@ Examples:
 							ArgsUsage: "[git URL]",
 							Flags: []cli.Flag{
 								&cli.StringFlag{
-									Name:    "branch",
-									Aliases: []string{"b"},
-									Usage:   "Branch to submit from (default: main)",
+									Name:    "ref",
+									Aliases: []string{"r", "branch", "b"},
+									Usage:   "Git ref to submit from (e.g. refs/heads/main, refs/tags/v1.0.0, or a bare branch name; default: main)",
+								},
+								&cli.StringFlag{
+									Name:    "path",
+									Aliases: []string{"p"},
+									Usage:   "Subdirectory within the repo to use as the template root (for monorepos)",
+								},
+								&cli.StringFlag{
+									Name:  "name",
+									Usage: "Override the template name from manifest.json",
+								},
+								&cli.StringFlag{
+									Name:  "slug",
+									Usage: "Override the template slug from manifest.json (lowercase, hyphens only)",
 								},
 							},
 							Action: func(ctx *cli.Context) error {
@@ -2100,8 +2119,11 @@ Examples:
 								if gitURL == "" {
 									return errors.New("no git URL provided")
 								}
-								branch := ctx.String("branch")
-								_, err := agents.SubmitTemplate(gitURL, branch)
+								ref := ctx.String("ref")
+								path := ctx.String("path")
+								nameOverride := ctx.String("name")
+								slugOverride := ctx.String("slug")
+								_, err := agents.SubmitTemplate(gitURL, ref, path, nameOverride, slugOverride)
 								return err
 							},
 						},
@@ -2116,9 +2138,22 @@ Examples:
 									Usage: "New git URL (optional, uses existing if omitted)",
 								},
 								&cli.StringFlag{
-									Name:    "branch",
-									Aliases: []string{"b"},
-									Usage:   "Branch to pull from (default: main)",
+									Name:    "ref",
+									Aliases: []string{"r", "branch", "b"},
+									Usage:   "Git ref to pull from (e.g. refs/heads/main, refs/tags/v1.0.0, or a bare branch name; default: main)",
+								},
+								&cli.StringFlag{
+									Name:    "path",
+									Aliases: []string{"p"},
+									Usage:   "Subdirectory within the repo to use as the template root (for monorepos)",
+								},
+								&cli.StringFlag{
+									Name:  "name",
+									Usage: "Override the template name from manifest.json",
+								},
+								&cli.StringFlag{
+									Name:  "slug",
+									Usage: "Override the template slug from manifest.json (lowercase, hyphens only)",
 								},
 							},
 							Action: func(ctx *cli.Context) error {
@@ -2127,8 +2162,11 @@ Examples:
 									return errors.New("no template ID provided")
 								}
 								gitURL := ctx.String("git-url")
-								branch := ctx.String("branch")
-								_, err := agents.UpdateTemplate(templateID, gitURL, branch)
+								ref := ctx.String("ref")
+								path := ctx.String("path")
+								nameOverride := ctx.String("name")
+								slugOverride := ctx.String("slug")
+								_, err := agents.UpdateTemplate(templateID, gitURL, ref, path, nameOverride, slugOverride)
 								return err
 							},
 						},
@@ -2156,6 +2194,36 @@ Examples:
 									return errors.New("no git URL provided")
 								}
 								_, err := agents.ListBranches(gitURL)
+								return err
+							},
+						},
+						{
+							Name:      "refs",
+							Usage:     "List branches and tags (with the default branch) for a git repository",
+							ArgsUsage: "[git URL]",
+							Action: func(ctx *cli.Context) error {
+								gitURL := ctx.Args().First()
+								if gitURL == "" {
+									return errors.New("no git URL provided")
+								}
+								_, err := agents.ListRefs(gitURL)
+								return err
+							},
+						},
+						{
+							Name:      "search-refs",
+							Usage:     "Search branches and tags by name for a git repository",
+							ArgsUsage: "[git URL] [search query]",
+							Action: func(ctx *cli.Context) error {
+								gitURL := ctx.Args().Get(0)
+								search := ctx.Args().Get(1)
+								if gitURL == "" {
+									return errors.New("no git URL provided")
+								}
+								if search == "" {
+									return errors.New("no search query provided")
+								}
+								_, err := agents.SearchRefs(gitURL, search)
 								return err
 							},
 						},

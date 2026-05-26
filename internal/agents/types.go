@@ -544,6 +544,14 @@ type TemplateRequiredSecret struct {
 	Required    bool     `json:"required"`
 }
 
+// TemplateTask represents a scheduled task bundled with a template.
+type TemplateTask struct {
+	Name     string `json:"name"`
+	Schedule string `json:"schedule"`
+	Prompt   string `json:"prompt"`
+	Enabled  bool   `json:"enabled,omitempty"`
+}
+
 // Template represents a pre-built agent template.
 type Template struct {
 	TemplateID        string                   `json:"templateId"`
@@ -551,13 +559,14 @@ type Template struct {
 	Slug              string                   `json:"slug"`
 	Description       string                   `json:"description"`
 	LongDescription   *string                  `json:"longDescription"`
-	PartnerName       string                   `json:"partnerName"`
-	PartnerLogoURL    *string                  `json:"partnerLogoUrl"`
-	PartnerURL        *string                  `json:"partnerUrl"`
+	AuthorName        string                   `json:"authorName"`
+	AuthorLogoURL     *string                  `json:"authorLogoUrl"`
+	AuthorURL         *string                  `json:"authorUrl"`
 	Category          string                   `json:"category"`
 	Tags              []string                 `json:"tags"`
 	SnapshotCid       string                   `json:"snapshotCid"`
 	OpenclawVersion   string                   `json:"openclawVersion"`
+	Engine            string                   `json:"engine,omitempty"`
 	RequiredSecrets   []TemplateRequiredSecret `json:"requiredSecrets"`
 	IncludedSkillCids []string                 `json:"includedSkillCids"`
 	DefaultVibe       *string                  `json:"defaultVibe"`
@@ -573,10 +582,12 @@ type Template struct {
 	Version           int                      `json:"version,omitempty"`
 	CreatedAt         string                   `json:"createdAt,omitempty"`
 	UpdatedAt         string                   `json:"updatedAt,omitempty"`
+	Tasks             []TemplateTask           `json:"tasks,omitempty"`
 	SubmittedBy       *string                  `json:"submittedBy,omitempty"`
 	GitURL            *string                  `json:"gitUrl,omitempty"`
+	GitPath           *string                  `json:"gitPath,omitempty"`
+	GitRef            *string                  `json:"gitRef,omitempty"`
 	GitCommitSha      *string                  `json:"gitCommitSha,omitempty"`
-	ReadmeHTML        *string                  `json:"readmeHtml,omitempty"`
 }
 
 // TemplateListResponse is the response from listing templates.
@@ -592,18 +603,20 @@ type TemplateDetailResponse struct {
 
 // SubmitTemplateBody is the request body for validating, submitting, or updating a template.
 type SubmitTemplateBody struct {
-	GitURL string `json:"gitUrl,omitempty"`
-	Branch string `json:"branch,omitempty"`
+	GitURL       string `json:"gitUrl,omitempty"`
+	Ref          string `json:"ref,omitempty"`
+	Path         string `json:"path,omitempty"`
+	NameOverride string `json:"nameOverride,omitempty"`
+	SlugOverride string `json:"slugOverride,omitempty"`
 }
 
 // ValidateTemplateResponse is the response from validating a git repo for template submission.
 type ValidateTemplateResponse struct {
-	Valid     bool        `json:"valid"`
-	Errors    []string    `json:"errors"`
-	Manifest  interface{} `json:"manifest,omitempty"`
-	Readme    string      `json:"readme,omitempty"`
-	Files     []string    `json:"files,omitempty"`
-	CommitSha string      `json:"commitSha,omitempty"`
+	Valid    bool        `json:"valid"`
+	Errors   []string    `json:"errors"`
+	Manifest interface{} `json:"manifest,omitempty"`
+	Readme   string      `json:"readme,omitempty"`
+	Files    []string    `json:"files,omitempty"`
 }
 
 // SubmitTemplateResponse is the response from submitting or updating a template.
@@ -628,6 +641,30 @@ type BranchesBody struct {
 // BranchesResponse is the response from listing branches.
 type BranchesResponse struct {
 	Branches []string `json:"branches"`
+}
+
+// RefsBody is the request body for listing repo branches and tags.
+type RefsBody struct {
+	GitURL string `json:"gitUrl"`
+}
+
+// RefsResponse is the response from listing repo branches and tags.
+type RefsResponse struct {
+	Branches      []string `json:"branches"`
+	Tags          []string `json:"tags"`
+	DefaultBranch *string  `json:"defaultBranch"`
+}
+
+// SearchRefsBody is the request body for searching repo branches and tags.
+type SearchRefsBody struct {
+	GitURL string `json:"gitUrl"`
+	Search string `json:"search"`
+}
+
+// SearchRefsResponse is the response from searching repo branches and tags.
+type SearchRefsResponse struct {
+	Branches []string `json:"branches"`
+	Tags     []string `json:"tags"`
 }
 
 // --- Config ---

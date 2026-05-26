@@ -914,6 +914,8 @@ COMMANDS:
    update, u    Update an existing template submission (re-pull from repo)
    delete, d    Archive a template submission
    branches     List branches for a git repository
+   refs         List branches and tags (with the default branch) for a git repository
+   search-refs  Search branches and tags by name for a git repository
    help, h      Shows a list of commands or help for one command
 
 OPTIONS:
@@ -944,18 +946,33 @@ Your git repo must contain a valid `manifest.json` with template metadata, a `RE
 # Validate your repo before submitting
 pinata agents templates validate https://github.com/user/my-agent-template
 
-# Validate a specific branch
-pinata agents templates validate https://github.com/user/my-agent-template --branch develop
+# Validate a specific ref (branch or tag)
+pinata agents templates validate https://github.com/user/my-agent-template --ref develop
+pinata agents templates validate https://github.com/user/my-agent-template --ref refs/tags/v1.0.0
+
+# Validate a subdirectory in a monorepo
+pinata agents templates validate https://github.com/user/monorepo --path packages/my-agent
 
 # List available branches
 pinata agents templates branches https://github.com/user/my-agent-template
 
+# List branches and tags (with the default branch)
+pinata agents templates refs https://github.com/user/my-agent-template
+
+# Search branches and tags by name
+pinata agents templates search-refs https://github.com/user/my-agent-template v1
+
 # Submit the template
 pinata agents templates submit https://github.com/user/my-agent-template
 
-# Submit from a specific branch
-pinata agents templates submit https://github.com/user/my-agent-template --branch develop
+# Submit from a specific ref and/or subdirectory
+pinata agents templates submit https://github.com/user/monorepo --ref develop --path packages/my-agent
+
+# Override the name/slug from manifest.json
+pinata agents templates submit https://github.com/user/my-agent-template --name "My Agent" --slug my-agent
 ```
+
+> `--ref` accepts a bare branch name (e.g. `develop`), a full branch ref (`refs/heads/develop`), or a tag ref (`refs/tags/v1.0.0`). Bare names are treated as branches. `--branch`/`-b` remain as aliases for `--ref`. Defaults to `main`.
 
 **Managing your submissions:**
 
@@ -966,8 +983,8 @@ pinata agents templates mine
 # Update an existing submission (re-pull from repo)
 pinata agents templates update <template-id>
 
-# Update with a new repo URL or branch
-pinata agents templates update <template-id> --git-url https://github.com/user/new-repo --branch main
+# Update from a new repo URL, ref, and/or subdirectory
+pinata agents templates update <template-id> --git-url https://github.com/user/new-repo --ref main --path packages/my-agent
 
 # Archive a submission
 pinata agents templates delete <template-id>

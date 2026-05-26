@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### 🚀 Features
+
+- Add `templates refs` and `templates search-refs` to list/search branches and tags for a repo
+- Support submitting/updating templates from a subdirectory via `--path` (monorepos)
+- Support `--name`/`--slug` overrides when submitting templates
+
+### 🐛 Bug Fixes
+
+- Fix `templates update` failing for templates submitted from a branch or subfolder: send the API's required `ref` (with `path` for monorepos) instead of the removed `branch` field
+
+### 🚜 Refactor
+
+- Align template request/response models with the updated Agents API (`ref` replaces `branch`; `author*` replaces `partner*`; add `engine`, `tasks`, `gitPath`, `gitRef`)
+
 ## [0.3.0] - 2026-04-16
 
 ### 🚀 Features
