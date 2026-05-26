@@ -21,9 +21,13 @@ func reorderArgs(app *cli.App, args []string) []string {
 	collectFlagValueInfo(app.Flags, globalFlags)
 
 	// Navigate the command tree to find where the resolved command's argument
-	// region begins and which flags belong to it.
+	// region begins and which flags belong to it. Only leading global flags
+	// (before the first command token) are skipped here; once we have descended
+	// into a command, any flag belongs to that command and marks the start of
+	// the argument region we reorder.
 	cmds := app.Commands
 	var resolvedFlags []cli.Flag
+	descended := false
 	i := 1
 	for i < len(args) {
 		tok := args[i]
@@ -31,6 +35,9 @@ func reorderArgs(app *cli.App, args []string) []string {
 			break
 		}
 		if isFlag(tok) {
+			if descended {
+				break
+			}
 			i++
 			if !strings.Contains(tok, "=") {
 				name := strings.TrimLeft(tok, "-")
@@ -46,6 +53,7 @@ func reorderArgs(app *cli.App, args []string) []string {
 		}
 		resolvedFlags = next.Flags
 		cmds = next.Subcommands
+		descended = true
 		i++
 	}
 

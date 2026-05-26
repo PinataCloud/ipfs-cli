@@ -16,6 +16,15 @@ func testApp() *cli.App {
 				Aliases: []string{"ag"},
 				Subcommands: []*cli.Command{
 					{
+						Name:    "create",
+						Aliases: []string{"c"},
+						Flags: []cli.Flag{
+							&cli.StringFlag{Name: "name", Aliases: []string{"n"}},
+							&cli.StringFlag{Name: "engine"},
+							&cli.StringFlag{Name: "user-name"},
+						},
+					},
+					{
 						Name:    "templates",
 						Aliases: []string{"tpl"},
 						Subcommands: []*cli.Command{
@@ -73,6 +82,16 @@ func TestReorderArgs(t *testing.T) {
 			name: "flags already before positional unchanged",
 			in:   []string{"pinata", "agents", "templates", "validate", "--ref", "main", "https://x"},
 			want: []string{"pinata", "agents", "templates", "validate", "--ref", "main", "https://x"},
+		},
+		{
+			name: "multiple flags before positional unchanged",
+			in:   []string{"pinata", "agents", "templates", "validate", "--ref", "main", "--path", "sub", "https://x"},
+			want: []string{"pinata", "agents", "templates", "validate", "--ref", "main", "--path", "sub", "https://x"},
+		},
+		{
+			name: "command with only flags, no positional (regression: do not orphan a flag value)",
+			in:   []string{"pinata", "agents", "create", "--name", "zz", "--engine", "hermes", "--user-name", "Smoke Test"},
+			want: []string{"pinata", "agents", "create", "--name", "zz", "--engine", "hermes", "--user-name", "Smoke Test"},
 		},
 		{
 			name: "alias branch after positional",
