@@ -11,6 +11,7 @@ import (
 
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 
 	"charm.land/bubbles/v2/spinner"
 	"charm.land/bubbles/v2/viewport"
@@ -530,7 +531,6 @@ func (m ChatModel) handleStreamEvent(event StreamEvent) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-
 // allowTool approves the pending tool call.
 func (m ChatModel) allowTool(always bool) (tea.Model, tea.Cmd) {
 	if m.pendingTool == nil {
@@ -989,7 +989,7 @@ func fetchAgentInfo(agentID string) (*AgentInfo, error) {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

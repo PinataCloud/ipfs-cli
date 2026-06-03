@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
 	"pinata/internal/gateways"
+	"pinata/internal/httpclient"
 	"pinata/internal/types"
-	"strings"
 )
 
 func DeleteFile(id string, network string) error {
@@ -32,7 +34,7 @@ func DeleteFile(id string, network string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))
@@ -69,7 +71,7 @@ func GetFile(id string, network string) (types.GetFileResponse, error) {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GetFileResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -125,7 +127,7 @@ func UpdateFile(id string, name string, network string) (types.GetFileResponse, 
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GetFileResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -212,7 +214,7 @@ func ListFiles(amount string, pageToken string, cidPending bool, name string, ci
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.ListResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -274,7 +276,7 @@ func GetSwapHistory(cid string, domain string, network string) (types.GetSwapHis
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GetSwapHistoryResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -332,7 +334,7 @@ func AddSwap(cid string, swapCid string, network string) (types.AddSwapResponse,
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.AddSwapResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -379,7 +381,7 @@ func RemoveSwap(cid string, network string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))

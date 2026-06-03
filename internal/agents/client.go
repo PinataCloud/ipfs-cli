@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 )
 
 const apiVersion = "v0"
@@ -43,7 +45,7 @@ func doRequest(method, path string, body interface{}) (*http.Response, error) {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to send the request"))
@@ -130,7 +132,7 @@ func doRequestURL(method, url string, body interface{}) (*http.Response, error) 
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to send the request"))

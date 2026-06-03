@@ -13,6 +13,8 @@ import (
 	"os/exec"
 	"runtime"
 	"time"
+
+	"pinata/internal/httpclient"
 )
 
 const (
@@ -91,7 +93,7 @@ func exchangeCodexToken(code, verifier string) (*codexTokenResponse, error) {
 		"client_id":     {codexClientID},
 		"code_verifier": {verifier},
 	}
-	resp, err := http.PostForm(codexTokenURL, params)
+	resp, err := httpclient.Client.PostForm(codexTokenURL, params)
 	if err != nil {
 		return nil, fmt.Errorf("token exchange request failed: %w", err)
 	}

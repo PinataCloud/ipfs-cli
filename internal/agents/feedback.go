@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 )
 
 // buildFeedbackURL constructs the full URL for the feedback endpoint.
@@ -42,7 +44,7 @@ func SubmitFeedback(message string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))

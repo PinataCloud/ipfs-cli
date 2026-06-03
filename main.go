@@ -20,14 +20,16 @@ import (
 	"pinata/internal/groups"
 	"pinata/internal/keys"
 	uploads "pinata/internal/upload"
+	"pinata/internal/version"
 
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
 	app := &cli.Command{
-		Name:  "pinata",
-		Usage: "The official Pinata IPFS CLI! To get started make an API key at https://app.pinata.cloud/keys, then authorize the CLI with the auth command with your JWT",
+		Name:    "pinata",
+		Usage:   "The official Pinata IPFS CLI! To get started make an API key at https://app.pinata.cloud/keys, then authorize the CLI with the auth command with your JWT",
+		Version: version.Version,
 		Commands: []*cli.Command{
 			{
 				Name:      "auth",
