@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"pinata/internal/config"
+	"pinata/internal/version"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -146,6 +148,7 @@ func StreamChat(ctx context.Context, agentID, token, model, session string, mess
 		// Connect to WebSocket with proper headers and timeout
 		header := http.Header{}
 		header.Set("Origin", "https://"+config.GetAgentsHost())
+		header.Set("User-Agent", version.UserAgent())
 		if token != "" {
 			header.Set("Authorization", "Bearer "+token)
 		}
@@ -237,7 +240,7 @@ func StreamChat(ctx context.Context, agentID, token, model, session string, mess
 			if connectResp.Error != nil {
 				errMsg = connectResp.Error.Message
 			}
-			events <- StreamEvent{Type: StreamEventError, Error: fmt.Errorf(errMsg)}
+			events <- StreamEvent{Type: StreamEventError, Error: errors.New(errMsg)}
 			return
 		}
 
@@ -380,7 +383,7 @@ func StreamChat(ctx context.Context, agentID, token, model, session string, mess
 							if reason, ok := payload.Data["reason"].(string); ok {
 								errMsg = reason
 							}
-							events <- StreamEvent{Type: StreamEventError, Error: fmt.Errorf(errMsg)}
+							events <- StreamEvent{Type: StreamEventError, Error: errors.New(errMsg)}
 							return
 						}
 
@@ -413,7 +416,7 @@ func StreamChat(ctx context.Context, agentID, token, model, session string, mess
 							if msg.Error != nil {
 								errMsg = msg.Error.Message
 							}
-							events <- StreamEvent{Type: StreamEventError, Error: fmt.Errorf(errMsg)}
+							events <- StreamEvent{Type: StreamEventError, Error: errors.New(errMsg)}
 							return
 						}
 						// Request accepted, continue waiting for events
