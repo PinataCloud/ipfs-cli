@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
+
 	"pinata/internal/config"
 	"pinata/internal/gateways"
+	"pinata/internal/httpclient"
 	"pinata/internal/utils"
-	"time"
 )
 
 func SaveJWT() error {
@@ -39,9 +41,7 @@ func SaveJWT() error {
 
 	req.Header.Set("Authorization", "Bearer "+jwt)
 
-	client := &http.Client{
-		Timeout: time.Duration(time.Second * 3),
-	}
+	client := httpclient.WithTimeout(time.Second * 3)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err

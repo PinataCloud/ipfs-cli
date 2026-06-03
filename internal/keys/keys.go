@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 	"pinata/internal/types"
-	"strings"
 )
 
 func ListKeys(name string, revoked bool, limitedUse bool, exhausted bool, offset string) (types.KeyListResponse, error) {
@@ -51,7 +53,7 @@ func ListKeys(name string, revoked bool, limitedUse bool, exhausted bool, offset
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.KeyListResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -146,7 +148,7 @@ func CreateKey(name string, admin bool, uses int, endpoints []string) (types.Cre
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.CreateKeyResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -188,7 +190,7 @@ func RevokeKey(id string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))

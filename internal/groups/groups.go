@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 	"pinata/internal/types"
-	"strings"
 )
 
 func GetGroup(id string, network string) (types.GroupCreateResponse, error) {
@@ -31,7 +33,7 @@ func GetGroup(id string, network string) (types.GroupCreateResponse, error) {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -95,7 +97,7 @@ func ListGroups(amount string, name string, token string, network string) (types
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GroupListResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -152,7 +154,7 @@ func CreateGroup(name string, network string) (types.GroupCreateResponse, error)
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -208,7 +210,7 @@ func UpdateGroup(id string, name string, network string) (types.GroupCreateRespo
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GroupCreateResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -255,7 +257,7 @@ func DeleteGroup(id string, network string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))
@@ -292,7 +294,7 @@ func AddFile(groupId string, fileId string, network string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))
@@ -328,7 +330,7 @@ func RemoveFile(groupId string, fileId string, network string) error {
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to send the request"))

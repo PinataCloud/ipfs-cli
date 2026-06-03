@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
 	"pinata/internal/common"
 	"pinata/internal/config"
+	"pinata/internal/httpclient"
 )
 
 // buildSkillsURL constructs the full URL for a Skills API endpoint
@@ -41,7 +43,7 @@ func doSkillsRequest(method, path string, body interface{}) (*http.Response, err
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed to send the request"))

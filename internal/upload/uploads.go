@@ -11,13 +11,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"pinata/internal/common"
-	"pinata/internal/config"
-	cliConfig "pinata/internal/config"
-	"pinata/internal/types"
 	"runtime"
 	"strings"
 	"time"
+
+	"pinata/internal/common"
+	"pinata/internal/config"
+	cliConfig "pinata/internal/config"
+	"pinata/internal/httpclient"
+	"pinata/internal/types"
 
 	"github.com/eventials/go-tus"
 	"github.com/schollz/progressbar/v3"
@@ -25,7 +27,7 @@ import (
 
 const (
 	MAX_SIZE_REGULAR_UPLOAD = 100 * 1024 * 1024 // Uploead threshold
-	CHUNK_SIZE              = 50 * 1024 * 1024 + 1  // Chunk size
+	CHUNK_SIZE              = 50*1024*1024 + 1  // Chunk size
 )
 
 func Upload(filePath string, groupId string, name string, verbose bool, network string) (types.UploadResponse, error) {
@@ -100,7 +102,7 @@ func regularUpload(filePath string, groupId string, name string, verbose bool, n
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", contentType)
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.UploadResponse{}, errors.Join(err, errors.New("failed to send the request"))
@@ -194,7 +196,7 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 		ChunkSize:  CHUNK_SIZE, // 50MB chunks
 		Resume:     false,
 		Header:     http.Header{"Authorization": {fmt.Sprintf("Bearer %s", jwt)}},
-		HttpClient: http.DefaultClient,
+		HttpClient: httpclient.Client,
 	}
 
 	uploadHost := cliConfig.GetUploadsHost()
@@ -286,7 +288,7 @@ func uploadWithTUS(filePath string, groupId string, name string, verbose bool, s
 	}
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpclient.Client.Do(req)
 	if err != nil {
 		return types.UploadResponse{}, fmt.Errorf("failed to fetch upload response: %w", err)
 	}
@@ -352,7 +354,7 @@ func folderUpload(filePath string, groupId string, name string, verbose bool) (t
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", contentType)
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.UploadResponse{}, errors.Join(err, errors.New("failed to send the request"))

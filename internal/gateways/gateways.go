@@ -9,13 +9,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"pinata/internal/common"
-	"pinata/internal/config"
-	"pinata/internal/types"
-	"pinata/internal/utils"
 	"runtime"
 	"strings"
 	"time"
+
+	"pinata/internal/common"
+	"pinata/internal/config"
+	"pinata/internal/httpclient"
+	"pinata/internal/types"
+	"pinata/internal/utils"
 )
 
 func FindGatewayDomain() ([]byte, error) {
@@ -50,7 +52,7 @@ func SetGateway(domain string) error {
 		req.Header.Set("Authorization", "Bearer "+string(jwt))
 		req.Header.Set("content-type", "application/json")
 
-		client := &http.Client{}
+		client := httpclient.Client
 		resp, err := client.Do(req)
 		if err != nil {
 			return errors.Join(err, errors.New("failed to send the request"))
@@ -149,7 +151,7 @@ func GetAccessLink(cid string, expires int, network string) (types.GetSignedURLR
 	req.Header.Set("Authorization", "Bearer "+string(jwt))
 	req.Header.Set("content-type", "application/json")
 
-	client := &http.Client{}
+	client := httpclient.Client
 	resp, err := client.Do(req)
 	if err != nil {
 		return types.GetSignedURLResponse{}, errors.Join(err, errors.New("failed to send the request"))
