@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-06-03
+
+### 🚀 Features
+
+- Identify CLI traffic with a `User-Agent: pinata-cli/<version>` header on all API requests, including uploads (TUS) and the websocket chat handshake; previously requests went out with Go's default User-Agent
+- Add `pinata --version`, with the version injected into release builds
+
+### 🐛 Bug Fixes
+
+- Chat stream error messages containing `%` are no longer mangled (was `fmt.Errorf` with a non-constant format string; also fixes the `go vet` warnings)
+
 ## [0.3.0] - 2026-05-28
 
 ### 🚀 Features
