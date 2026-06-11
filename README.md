@@ -1166,6 +1166,39 @@ OPTIONS:
 pinata agents versions <agent-id>
 ```
 
+## Releasing
+
+Releases are cut from `main` and fully automated by [GoReleaser](https://goreleaser.com/) via GitHub Actions. Pushing a `v*` tag triggers the [`Release`](.github/workflows/release.yml) workflow, which builds the cross-platform binaries (Linux, macOS, Windows), publishes a GitHub Release with the archives, and updates the [Homebrew tap](https://github.com/PinataCloud/homebrew-ipfs-cli). The version string is baked into the binary at build time from the tag (`pinata --version`), so there's no version constant to bump by hand.
+
+To release a new version (using `vX.Y.Z` as an example):
+
+1. **Make sure `main` is green and up to date.**
+
+   ```bash
+   git checkout main && git pull
+   ```
+
+2. **Update `CHANGELOG.md`.** Add a new section at the top documenting what changed, following the existing format (`## [X.Y.Z] - YYYY-MM-DD` with `### 🚀 Features` / `### 🐛 Bug Fixes` / `### 🚜 Refactor` subsections). Commit it:
+
+   ```bash
+   git commit -am "chore: update changelog for vX.Y.Z release"
+   ```
+
+3. **Tag the release** with a `v`-prefixed [semver](https://semver.org/) tag and push the tag:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+4. **Watch the workflow.** The `Release` workflow runs GoReleaser and, on success, the new version appears on the [Releases](https://github.com/PinataCloud/ipfs-cli/releases) page and the Homebrew formula is bumped automatically.
+
+Notes:
+
+- The tag is the source of truth for the version. Do not create a GitHub Release manually — GoReleaser creates it.
+- If you tag a bad release, delete the tag locally and remotely (`git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`), delete the draft/release on GitHub, fix the issue, and re-tag.
+- Updating the Homebrew tap requires the `HOMEBREW_TAP_GITHUB_TOKEN` secret to be configured on the repo (already set up); no local action is needed.
+
 ## Contact
 
 If you have any questions please feel free to reach out to us!
